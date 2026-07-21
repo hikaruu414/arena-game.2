@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Arena Battle 3D</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+    <!--======================================================
+        HUD
+    =======================================================-->
+
+    <div id="gameUI">
+
+        <div id="hp">
+            HP :
+            <span id="playerHP">500</span>
+        </div>
+
+        <div id="enemyHP">
+            Enemy :
+            <span id="enemyHealth">500</span>
+        </div>
+
+    </div>
+
+    <!--======================================================
+        PLAYER HP BAR
+    =======================================================-->
+
+    <div id="playerBar">
+        <div id="playerHealthBar"></div>
+    </div>
+
+    <!--======================================================
+        MOBILE CONTROL
+    =======================================================-->
+
+    <div id="mobileControls">
+
+        <button type="button" id="up">▲</button>
+
+        <div>
+
+            <button type="button" id="left">◀</button>
+
+            <button type="button" id="down">▼</button>
+
+            <button type="button" id="right">▶</button>
+
+        </div>
+
+        <button type="button" id="attack">
+            ⚔
+        </button>
+
+    </div>
+
+    <!--======================================================
+        PAUSE
+    =======================================================-->
+
+    <div id="pauseText">
+        PAUSED
+    </div>
+
+    <!--======================================================
+        RESULT SCREEN
+    =======================================================-->
+
+    <div id="resultScreen">
+
+        <h1 id="resultText"></h1>
+
+        <button onclick="location.reload()">
+            MAIN LAGI
+        </button>
+
+    </div>
+
+    <!--======================================================
+        GAME INFO
+    =======================================================-->
+
+    <div class="hint">
+
+        <b>PC</b><br>
+
+        W A S D = Bergerak<br>
+        SPACE / Klik Kiri = Attack<br>
+        ESC = Pause
+
+        <br><br>
+
+        <b>Mobile</b><br>
+
+        Gunakan tombol di layar.
+
+    </div>
+
+    <!--======================================================
+        THREE.JS
+    =======================================================-->
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+    <!--======================================================
+        GAME FILES
+    =======================================================-->
+
+    <script src="js/arena.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/enemy.js"></script>
+    <script src="js/minion.js"></script>
+    <script src="js/tower.js"></script>
+    <script src="js/base.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+
+</body>
+
+</html>
