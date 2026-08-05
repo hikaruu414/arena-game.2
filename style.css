@@ -343,49 +343,39 @@ canvas{
     MOBILE LANDSCAPE
 ==========================================================*/
 
-@media (max-height: 500px) {
+@media (max-width: 799px) {
 
     #mobileControls {
-        bottom: 5px;
-        padding: 5px 12px;
+        bottom: 10px;
+        padding: 8px 12px;
     }
 
-
     #dpad {
-        grid-template-columns: repeat(3, 48px);
-        grid-template-rows: repeat(3, 48px);
-
+        grid-template-columns: repeat(3, 50px);
+        grid-template-rows: repeat(3, 50px);
         gap: 3px;
     }
 
-
     .moveButton {
-        width: 48px;
-        height: 48px;
-
+        width: 50px;
+        height: 50px;
         font-size: 20px;
-
-        border-radius: 14px;
+        border-radius: 15px;
     }
-
 
     #dpadCenter {
-        width: 48px;
-        height: 48px;
+        width: 50px;
+        height: 50px;
     }
 
-
     #attack {
-        width: 74px;
-        height: 74px;
-
-        margin-bottom: 25px;
-
-        font-size: 32px;
+        width: 72px;
+        height: 72px;
+        margin-bottom: 20px;
+        font-size: 30px;
     }
 
 }
-
 
 
 /*==========================================================
