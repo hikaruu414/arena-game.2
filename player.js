@@ -162,40 +162,74 @@ window.addEventListener("keyup",e=>{
     MOBILE INPUT
 ==========================================================*/
 
-const mobileInput={
-
-    up:false,
-    down:false,
-    left:false,
-    right:false
-
+const mobileInput = {
+    up: false,
+    down: false,
+    left: false,
+    right: false
 };
 
-function buttonControl(id,key){
+function resetMobileInput() {
 
-    const btn=document.getElementById(id);
+    mobileInput.up = false;
+    mobileInput.down = false;
+    mobileInput.left = false;
+    mobileInput.right = false;
 
-    if(!btn) return;
-
-    btn.addEventListener("pointerdown",()=>{
-        mobileInput[key]=true;
-    });
-
-    ["pointerup","pointerleave","pointercancel"].forEach(event=>{
-
-        btn.addEventListener(event,()=>{
-            mobileInput[key]=false;
+    document
+        .querySelectorAll(".moveButton")
+        .forEach(button => {
+            button.classList.remove("pressed");
         });
 
+}
+
+function buttonControl(id, key) {
+
+    const button = document.getElementById(id);
+
+    if (!button) return;
+
+    button.addEventListener("pointerdown", event => {
+
+        event.preventDefault();
+
+        mobileInput[key] = true;
+
+        button.classList.add("pressed");
+
+        if (button.setPointerCapture) {
+            button.setPointerCapture(event.pointerId);
+        }
+
+    });
+
+    const releaseButton = event => {
+
+        event.preventDefault();
+
+        mobileInput[key] = false;
+
+        button.classList.remove("pressed");
+
+    };
+
+    button.addEventListener("pointerup", releaseButton);
+    button.addEventListener("pointercancel", releaseButton);
+    button.addEventListener("lostpointercapture", releaseButton);
+
+    button.addEventListener("contextmenu", event => {
+        event.preventDefault();
     });
 
 }
 
-buttonControl("up","up");
-buttonControl("down","down");
-buttonControl("left","left");
-buttonControl("right","right");
+buttonControl("up", "up");
+buttonControl("down", "down");
+buttonControl("left", "left");
+buttonControl("right", "right");
 
+window.addEventListener("blur", resetMobileInput);
 /*==========================================================
     Arena Battle 3D
     player.js FINAL HIKARU
@@ -206,101 +240,143 @@ buttonControl("right","right");
     UPDATE PLAYER
 ==========================================================*/
 
-function updatePlayer(dt){
+function updatePlayer(dt) {
 
-    if(!Player.mesh) return;
+    if (!Player.mesh) return;
 
     let x = 0;
     let z = 0;
 
-    // Keyboard
-    if(keys["w"]) z--;
-    if(keys["s"]) z++;
-    if(keys["a"]) x--;
-    if(keys["d"]) x++;
+    /*================ KEYBOARD ================*/
 
-    // Mobile
-    if(mobileInput.up) z--;
-    if(mobileInput.down) z++;
-    if(mobileInput.left) x--;
-    if(mobileInput.right) x++;
-
-    // Normalize movement
-    const len = Math.hypot(x,z);
-
-    if(len > 0){
-
-    x /= len;
-    z /= len;
-
-    Player.mesh.position.x += x * Player.speed * dt;
-    Player.mesh.position.z += z * Player.speed * dt;
-
-    Player.mesh.rotation.y = Math.atan2(x,z);
-
-    // Animasi jalan
-    const t = performance.now() * 0.01;
-
-    Player.mesh.children.forEach(part=>{
-        if(part.geometry instanceof THREE.BoxGeometry){
-            part.rotation.x = Math.sin(t * 8) * 0.15;
-        }
-    });
-}
-
-    if(len > 0){
-
-        x /= len;
-        z /= len;
-
-        Player.mesh.position.x += x * Player.speed * dt;
-        Player.mesh.position.z += z * Player.speed * dt;
-
-        Player.mesh.rotation.y = Math.atan2(x,z);
-
+    if (keys["w"] || keys["arrowup"]) {
+        z -= 1;
     }
 
-    // Batas arena
-    Player.mesh.position.x = THREE.MathUtils.clamp(
-        Player.mesh.position.x,
-        -14,
-        14
-    );
-
-    Player.mesh.position.z = THREE.MathUtils.clamp(
-        Player.mesh.position.z,
-        -14,
-        14
-    );
-
-    // Cooldown serangan
-    if(Player.attackTimer > 0){
-        Player.attackTimer -= dt;
+    if (keys["s"] || keys["arrowdown"]) {
+        z += 1;
     }
 
-    // Animasi idle
-    const t = performance.now() * 0.01;
+    if (keys["a"] || keys["arrowleft"]) {
+        x -= 1;
+    }
 
-    Player.mesh.children.forEach(part=>{
+    if (keys["d"] || keys["arrowright"]) {
+        x += 1;
+    }
 
-        if(part.geometry instanceof THREE.BoxGeometry){
+    /*================ MOBILE ================*/
 
-            part.rotation.x = Math.sin(t) * 0.05;
+    if (mobileInput.up) {
+        z -= 1;
+    }
 
-        }
+    if (mobileInput.down) {
+        z += 1;
+    }
+
+    if (mobileInput.left) {
+        x -= 1;
+    }
+
+    if (mobileInput.right) {
+        x += 1;
+    }
+
+    /*================ MOVEMENT ================*/
+
+    const length = Math.hypot(x, z);
+
+    const legs = Player.mesh.children.filter(part => {
+
+        return (
+            part.isMesh &&
+            part.geometry instanceof THREE.BoxGeometry &&
+            part.position.y < 1
+        );
 
     });
 
-    // Player mati
-    if(Player.hp <= 0){
+    if (length > 0) {
+
+        x /= length;
+        z /= length;
+
+        Player.mesh.position.x +=
+            x * Player.speed * dt;
+
+        Player.mesh.position.z +=
+            z * Player.speed * dt;
+
+        Player.mesh.rotation.y =
+            Math.atan2(x, z);
+
+        /* Animasi kaki */
+
+        const walk =
+            Math.sin(performance.now() * 0.012) * 0.45;
+
+        legs.forEach(leg => {
+
+            leg.rotation.x =
+                leg.position.x < 0
+                    ? walk
+                    : -walk;
+
+        });
+
+    } else {
+
+        /* Kembalikan kaki ke posisi awal */
+
+        legs.forEach(leg => {
+
+            leg.rotation.x +=
+                (0 - leg.rotation.x) * 0.2;
+
+        });
+
+    }
+
+    /*================ ARENA LIMIT ================*/
+
+    Player.mesh.position.x =
+        THREE.MathUtils.clamp(
+            Player.mesh.position.x,
+            -14,
+            14
+        );
+
+    Player.mesh.position.z =
+        THREE.MathUtils.clamp(
+            Player.mesh.position.z,
+            -14,
+            14
+        );
+
+    /*================ ATTACK COOLDOWN ================*/
+
+    if (Player.attackTimer > 0) {
+
+        Player.attackTimer =
+            Math.max(
+                0,
+                Player.attackTimer - dt
+            );
+
+    }
+
+    /*================ PLAYER DEATH ================*/
+
+    if (Player.hp <= 0) {
 
         Player.hp = 0;
 
-        if(typeof updateUI==="function"){
+        if (typeof updateUI === "function") {
             updateUI();
         }
 
-        if(typeof loseGame==="function"){
+        if (typeof loseGame === "function") {
             loseGame();
         }
 
