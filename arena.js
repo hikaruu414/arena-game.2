@@ -38,44 +38,25 @@ new THREE.Color(
 ==========================================================*/
 
 
-const camera =
-new THREE.PerspectiveCamera(
 
-    60,
-
-    window.innerWidth /
-    window.innerHeight,
-
+const camera = new THREE.PerspectiveCamera(
+    72,
+    window.innerWidth / window.innerHeight,
     0.1,
-
     1000
-
 );
-
-
 
 camera.position.set(
-
     0,
-
-    8,
-
-    10
-
+    9,
+    12
 );
-
-
 
 camera.lookAt(
-
     0,
-
     0,
-
     0
-
 );
-
 
 
 
