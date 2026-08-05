@@ -166,7 +166,225 @@ canvas{
 
 
 
-v
+/*==========================================================
+    MOBILE CONTROL
+==========================================================*/
+
+#mobileControls {
+    position: fixed;
+
+    left: 0;
+    right: 0;
+    bottom: 20px;
+
+    width: 100%;
+
+    padding: 12px 20px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+
+    z-index: 100;
+
+    pointer-events: none;
+}
+
+
+/*==========================================================
+    D-PAD
+==========================================================*/
+
+#dpad {
+    display: grid;
+
+    grid-template-columns: repeat(3, 58px);
+    grid-template-rows: repeat(3, 58px);
+
+    gap: 4px;
+
+    pointer-events: auto;
+
+    touch-action: none;
+}
+
+
+#up {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+
+#left {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+
+#dpadCenter {
+    grid-column: 2;
+    grid-row: 2;
+
+    width: 58px;
+    height: 58px;
+
+    border-radius: 50%;
+
+    background: rgba(0, 0, 0, 0.25);
+
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+
+#right {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+
+#down {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+
+/*==========================================================
+    MOVE BUTTON
+==========================================================*/
+
+.moveButton {
+    width: 58px;
+    height: 58px;
+
+    border: 2px solid rgba(255, 255, 255, 0.45);
+
+    border-radius: 18px;
+
+    background: rgba(20, 40, 70, 0.8);
+
+    color: white;
+
+    font-size: 24px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    user-select: none;
+
+    touch-action: none;
+
+    -webkit-user-select: none;
+
+    -webkit-tap-highlight-color: transparent;
+
+    transition:
+        transform 0.08s ease,
+        background 0.08s ease;
+}
+
+
+.moveButton:active,
+.moveButton.pressed {
+    transform: scale(0.88);
+
+    background: rgba(60, 140, 255, 0.9);
+}
+
+
+/*==========================================================
+    ATTACK BUTTON
+==========================================================*/
+
+#attack {
+    width: 88px;
+    height: 88px;
+
+    margin-bottom: 30px;
+
+    border: 2px solid rgba(255, 255, 255, 0.5);
+
+    border-radius: 50%;
+
+    background: rgba(210, 35, 35, 0.8);
+
+    color: white;
+
+    font-size: 38px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    pointer-events: auto;
+
+    touch-action: none;
+
+    user-select: none;
+
+    -webkit-user-select: none;
+
+    -webkit-tap-highlight-color: transparent;
+
+    transition:
+        transform 0.08s ease,
+        background 0.08s ease;
+}
+
+
+#attack:active {
+    transform: scale(0.88);
+
+    background: rgba(255, 65, 65, 0.95);
+}
+
+
+/*==========================================================
+    MOBILE LANDSCAPE
+==========================================================*/
+
+@media (max-height: 500px) {
+
+    #mobileControls {
+        bottom: 5px;
+        padding: 5px 12px;
+    }
+
+
+    #dpad {
+        grid-template-columns: repeat(3, 48px);
+        grid-template-rows: repeat(3, 48px);
+
+        gap: 3px;
+    }
+
+
+    .moveButton {
+        width: 48px;
+        height: 48px;
+
+        font-size: 20px;
+
+        border-radius: 14px;
+    }
+
+
+    #dpadCenter {
+        width: 48px;
+        height: 48px;
+    }
+
+
+    #attack {
+        width: 74px;
+        height: 74px;
+
+        margin-bottom: 25px;
+
+        font-size: 32px;
+    }
+
+}
 
 
 
