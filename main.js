@@ -41,13 +41,23 @@ window.addEventListener("keydown", (e) => {
 
 function updateCamera() {
 
-    if (typeof Player === "undefined" || !Player.mesh) return;
+    if (
+        typeof Player === "undefined" ||
+        !Player.mesh
+    ) {
+        return;
+    }
 
     const target = Player.mesh.position;
 
-    camera.position.x += (target.x - camera.position.x) * 0.08;
-    camera.position.z += (target.z + 10 - camera.position.z) * 0.08;
-    camera.position.y = 8;
+    camera.position.x +=
+        (target.x - camera.position.x) * 0.08;
+
+    camera.position.y +=
+        (9 - camera.position.y) * 0.08;
+
+    camera.position.z +=
+        (target.z + 12 - camera.position.z) * 0.08;
 
     camera.lookAt(
         target.x,
