@@ -49,21 +49,33 @@
 
     <div id="mobileControls">
 
-        <button type="button" id="up">▲</button>
+    <div id="dpad" aria-label="Kontrol gerakan">
 
-        <div>
-
-            <button type="button" id="left">◀</button>
-
-            <button type="button" id="down">▼</button>
-
-            <button type="button" id="right">▶</button>
-
-        </div>
-
-        <button type="button" id="attack">
-            ⚔
+        <button type="button" id="up" class="moveButton" aria-label="Maju">
+            ▲
         </button>
+
+        <button type="button" id="left" class="moveButton" aria-label="Kiri">
+            ◀️
+        </button>
+
+        <div id="dpadCenter"></div>
+
+        <button type="button" id="right" class="moveButton" aria-label="Kanan">
+            ▶️
+        </button>
+
+        <button type="button" id="down" class="moveButton" aria-label="Mundur">
+            ▼
+        </button>
+
+    </div>
+
+    <button type="button" id="attack" aria-label="Serang">
+        ⚔️
+    </button>
+
+</div>
 
     </div>
 
