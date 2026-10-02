@@ -1,13 +1,14 @@
 /*==========================================================
     Arena Battle 3D
-    ui.js FIXED
+    ui.js  (HUD gaya MOBA mobile)
 
     Sistem:
-    - HUD HP
-    - Health bar HTML (atas layar)
-    - Health bar 3D di atas hero
-    - Teks melayang / pesan
-    - Victory / Defeat + tombol main lagi
+    - HUD: potret + HP, scoreboard, waktu, HP musuh
+    - Bar HP 3D di atas hero, minion, tower, dan base
+    - Minimap
+    - Cooldown tombol skill
+    - Angka damage melayang dan banner pesan
+    - Layar menang / kalah + tombol main lagi
 ==========================================================*/
 
 "use strict";
@@ -15,56 +16,297 @@
 let playerBar = null;
 let enemyBar = null;
 
-// Lebar sprite health bar 3D saat HP penuh
-const BAR_WIDTH = 2;
+// Warna bar HP
+const COLOR_ALLY_BAR = 0x4cd964;
+const COLOR_ENEMY_BAR = 0xff4d4d;
+const COLOR_BLUE_TEAM = 0x3d8bff;
 
 /*==========================================================
-    CREATE 3D HEALTH BAR
+    HELPER DOM
 ==========================================================*/
 
-function createHealthBar(object, color) {
+const uiCache = {};
 
-    const canvas = document.createElement("canvas");
+// Ubah teks hanya kalau nilainya berubah
+function setText(id, value) {
 
-    canvas.width = 256;
-    canvas.height = 32;
+    if (uiCache[id] === value) return;
 
-    const ctx = canvas.getContext("2d");
+    uiCache[id] = value;
 
-    ctx.fillStyle = color;
-    ctx.fillRect(0, 0, 256, 32);
+    const el = document.getElementById(id);
 
-    const texture = new THREE.CanvasTexture(canvas);
+    if (el) {
+        el.textContent = value;
+    }
 
-    const material = new THREE.SpriteMaterial({
-        map: texture
-    });
+}
 
-    const sprite = new THREE.Sprite(material);
+function setWidth(id, percent) {
 
-    // Mulai dari penuh
-    sprite.scale.set(BAR_WIDTH, 0.25, 1);
-    sprite.position.y = 3;
+    const key = id + "_w";
 
-    object.add(sprite);
+    const rounded = Math.round(percent * 10) / 10;
 
-    return sprite;
+    if (uiCache[key] === rounded) return;
+
+    uiCache[key] = rounded;
+
+    const el = document.getElementById(id);
+
+    if (el) {
+        el.style.width = rounded + "%";
+    }
 
 }
 
 /*==========================================================
-    HEALTH BAR ANIMATION
-    Lebar bar = persen HP x BAR_WIDTH (dihaluskan)
+    BAR HP 3D
+    Dua sprite: latar gelap + isi berwarna.
 ==========================================================*/
 
+function createHealthBar(object, color, width, height, y) {
+
+    const w = width || 2;
+    const h = height || 0.25;
+
+    const back = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+            color: 0x14142a,
+            transparent: true,
+            opacity: 0.85,
+            depthTest: false
+        })
+    );
+
+    back.scale.set(w + 0.12, h + 0.1, 1);
+    back.position.y = y;
+    back.renderOrder = 10;
+
+    const fill = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+            color: color,
+            depthTest: false
+        })
+    );
+
+    fill.scale.set(w, h, 1);
+    fill.position.y = y;
+    fill.renderOrder = 11;
+
+    fill.userData.fullWidth = w;
+    fill.userData.back = back;
+
+    object.add(back);
+    object.add(fill);
+
+    return fill;
+
+}
+
+// Lebar bar = persen HP x lebar penuh (dihaluskan)
 function updateHealthBar(bar, current, max) {
 
     if (!bar) return;
 
+    const full = bar.userData.fullWidth || 2;
+
     const percent = Math.max(0, Math.min(1, current / max));
 
-    bar.scale.x +=
-        (percent * BAR_WIDTH - bar.scale.x) * 0.15;
+    bar.scale.x += (percent * full - bar.scale.x) * 0.2;
+
+}
+
+// Buat bar kalau belum ada (atau kalau unit dibuat ulang)
+function ensureBar(entity, color, width, height) {
+
+    if (!entity.mesh) return null;
+
+    if (!entity.bar || entity.bar.parent !== entity.mesh) {
+
+        entity.bar = createHealthBar(
+            entity.mesh,
+            color,
+            width,
+            height,
+            entity.mesh.userData.barHeight || 3
+        );
+
+    }
+
+    return entity.bar;
+
+}
+
+function updateWorldBars() {
+
+    // Hero
+    playerBar = ensureBar(Player, COLOR_ALLY_BAR, 2, 0.26);
+    enemyBar = ensureBar(Enemy, COLOR_ENEMY_BAR, 2, 0.26);
+
+    updateHealthBar(playerBar, Player.hp, Player.maxHp);
+    updateHealthBar(enemyBar, Enemy.hp, Enemy.maxHp);
+
+    // Minion: bar baru terlihat setelah terkena damage
+    for (const m of Minions) {
+
+        if (!m.alive) continue;
+
+        const bar = ensureBar(
+            m,
+            m.team === "player" ? COLOR_ALLY_BAR : COLOR_ENEMY_BAR,
+            1.2,
+            0.16
+        );
+
+        updateHealthBar(bar, m.hp, m.maxHp);
+
+        const show = m.hp < m.maxHp;
+
+        bar.visible = show;
+        bar.userData.back.visible = show;
+
+    }
+
+    // Tower
+    for (const t of Towers) {
+
+        if (!t.alive) continue;
+
+        const bar = ensureBar(
+            t,
+            t.team === "player" ? COLOR_BLUE_TEAM : COLOR_ENEMY_BAR,
+            2.4,
+            0.3
+        );
+
+        updateHealthBar(bar, t.hp, t.maxHp);
+
+    }
+
+    // Base
+    for (const b of Bases) {
+
+        if (b.hp <= 0) continue;
+
+        const bar = ensureBar(
+            b,
+            b.team === "player" ? COLOR_BLUE_TEAM : COLOR_ENEMY_BAR,
+            2.8,
+            0.32
+        );
+
+        updateHealthBar(bar, b.hp, b.maxHp);
+
+    }
+
+}
+
+/*==========================================================
+    MINIMAP
+==========================================================*/
+
+function drawMinimap() {
+
+    const canvas = document.getElementById("minimap");
+
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+
+    const size = canvas.width;
+
+    const k = size / 30;
+
+    const px = x => (x + 15) * k;
+    const pz = z => (z + 15) * k;
+
+    // Rumput + lane
+    ctx.fillStyle = "#3f9a47";
+    ctx.fillRect(0, 0, size, size);
+
+    ctx.fillStyle = "#d9b878";
+    ctx.fillRect(0, pz(-2.3), size, 4.6 * k);
+
+    // Bangunan
+    for (const b of Bases) {
+
+        if (b.hp <= 0) continue;
+
+        ctx.fillStyle = b.team === "player" ? "#3d8bff" : "#ff4d4d";
+        ctx.fillRect(px(b.mesh.position.x) - 6, pz(b.mesh.position.z) - 6, 12, 12);
+
+    }
+
+    for (const t of Towers) {
+
+        if (!t.alive) continue;
+
+        ctx.fillStyle = t.team === "player" ? "#3d8bff" : "#ff4d4d";
+        ctx.fillRect(px(t.mesh.position.x) - 4, pz(t.mesh.position.z) - 4, 8, 8);
+
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(px(t.mesh.position.x) - 4, pz(t.mesh.position.z) - 4, 8, 8);
+
+    }
+
+    // Minion
+    for (const m of Minions) {
+
+        if (!m.alive) continue;
+
+        ctx.fillStyle = m.team === "player" ? "#9ad1ff" : "#ffb09a";
+        ctx.beginPath();
+        ctx.arc(px(m.mesh.position.x), pz(m.mesh.position.z), 2.2, 0, 6.2832);
+        ctx.fill();
+
+    }
+
+    // Hero
+    function drawHero(mesh, color) {
+
+        ctx.fillStyle = color;
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(px(mesh.position.x), pz(mesh.position.z), 5, 0, 6.2832);
+        ctx.fill();
+        ctx.stroke();
+
+    }
+
+    if (Enemy.mesh && Enemy.alive) {
+        drawHero(Enemy.mesh, "#ff4d4d");
+    }
+
+    if (Player.mesh) {
+        drawHero(Player.mesh, "#4cd964");
+    }
+
+}
+
+/*==========================================================
+    COOLDOWN TOMBOL SKILL
+==========================================================*/
+
+function updateSkillButton(id, skill) {
+
+    const button = document.getElementById(id);
+
+    if (!button || !skill) return;
+
+    const ratio = skill.timer > 0 ? skill.timer / skill.cd : 0;
+
+    button.style.setProperty("--cd", (ratio * 100).toFixed(0) + "%");
+
+    button.classList.toggle("cooling", skill.timer > 0);
+
+    const label = button.querySelector(".cdText");
+
+    if (label) {
+        label.textContent = skill.timer > 0 ? Math.ceil(skill.timer) : "";
+    }
 
 }
 
@@ -75,90 +317,111 @@ function updateHealthBar(bar, current, max) {
 
 function updateUI() {
 
-    // ---------- Angka HP ----------
-    const playerHP = document.getElementById("playerHP");
+    // ---------- Angka dan bar HP ----------
+    setText("playerHP", String(Math.floor(Player.hp)));
+    setText("enemyHealth", String(Math.floor(Enemy.hp)));
 
-    if (playerHP) {
-        playerHP.innerHTML = Math.floor(Player.hp);
+    setWidth(
+        "playerHealthBar",
+        Math.max(0, Math.min(1, Player.hp / Player.maxHp)) * 100
+    );
+
+    setWidth(
+        "enemyHealthBar",
+        Math.max(0, Math.min(1, Enemy.hp / Enemy.maxHp)) * 100
+    );
+
+    // ---------- Scoreboard ----------
+    const minutes = Math.floor(gameTime / 60);
+    const seconds = Math.floor(gameTime % 60);
+
+    setText(
+        "gameTime",
+        String(minutes).padStart(2, "0") + ":" +
+        String(seconds).padStart(2, "0")
+    );
+
+    setText(
+        "blueTowers",
+        String(Towers.filter(t => t.team === "player" && t.alive).length)
+    );
+
+    setText(
+        "redTowers",
+        String(Towers.filter(t => t.team === "enemy" && t.alive).length)
+    );
+
+    // ---------- Skill ----------
+    if (typeof Skills !== "undefined") {
+
+        updateSkillButton("skillSlash", Skills.slash);
+        updateSkillButton("skillHeal", Skills.heal);
+
     }
 
-    const enemyHP = document.getElementById("enemyHealth");
+    // ---------- Bar 3D dan minimap ----------
+    updateWorldBars();
 
-    if (enemyHP) {
-        enemyHP.innerHTML = Math.floor(Enemy.hp);
-    }
-
-    // ---------- Bar HTML ----------
-    const htmlBar = document.getElementById("playerHealthBar");
-
-    if (htmlBar) {
-
-        const percent =
-            Math.max(0, Math.min(1, Player.hp / Player.maxHp)) * 100;
-
-        htmlBar.style.width = percent + "%";
-
-    }
-
-    // ---------- Bar 3D (dibuat saat pertama dibutuhkan,
-    //            dan dibuat ulang kalau hero respawn) ----------
-    if (Player.mesh && (!playerBar || playerBar.parent !== Player.mesh)) {
-        playerBar = createHealthBar(Player.mesh, "cyan");
-    }
-
-    if (Enemy.mesh && (!enemyBar || enemyBar.parent !== Enemy.mesh)) {
-        enemyBar = createHealthBar(Enemy.mesh, "red");
-    }
-
-    updateHealthBar(playerBar, Player.hp, Player.maxHp);
-    updateHealthBar(enemyBar, Enemy.hp, Enemy.maxHp);
+    drawMinimap();
 
 }
 
 /*==========================================================
-    DAMAGE TEXT / MESSAGE
+    ANGKA DAMAGE MELAYANG
 ==========================================================*/
 
-function showDamage(text) {
+let floatingCount = 0;
+
+function showDamageNumber(pos, text, kind) {
+
+    // Batasi jumlah elemen supaya tidak berat
+    if (floatingCount > 24) return;
+
+    const v = new THREE.Vector3(
+        pos.x,
+        (pos.y || 0) + 2.4,
+        pos.z
+    ).project(camera);
+
+    if (v.z > 1) return;
+
+    const x = (v.x * 0.5 + 0.5) * window.innerWidth;
+    const y = (-v.y * 0.5 + 0.5) * window.innerHeight;
 
     const div = document.createElement("div");
 
-    div.innerHTML = text;
-
-    div.style.position = "absolute";
-    div.style.left = "50%";
-    div.style.top = "35%";
-    div.style.transform = "translate(-50%,-50%)";
-    div.style.color = "yellow";
-    div.style.fontSize = "28px";
-    div.style.fontWeight = "bold";
-    div.style.zIndex = "100";
-    div.style.pointerEvents = "none";
+    div.className = "floatDmg" + (kind ? " " + kind : "");
+    div.textContent = typeof text === "number" ? Math.round(text) : text;
+    div.style.left = x + "px";
+    div.style.top = y + "px";
 
     document.body.appendChild(div);
 
-    let y = 0;
+    floatingCount++;
 
-    const anim = setInterval(() => {
+    setTimeout(() => {
 
-        y -= 2;
+        div.remove();
+        floatingCount--;
 
-        div.style.top = `calc(35% + ${y}px)`;
-        div.style.opacity = 1 + y / 100;
-
-        if (y < -100) {
-            clearInterval(anim);
-            div.remove();
-        }
-
-    }, 20);
+    }, 800);
 
 }
 
-// Dipanggil dari enemy.js dan tower.js
+/*==========================================================
+    BANNER PESAN (tower hancur, dll)
+==========================================================*/
+
 function addMessage(text) {
 
-    showDamage(text);
+    const div = document.createElement("div");
+
+    div.className = "bannerMsg";
+    div.textContent = text;
+
+    document.body.appendChild(div);
+
+    setTimeout(() => div.remove(), 1900);
 
 }
 
@@ -196,7 +459,7 @@ function showResult(text, type) {
     const title = document.getElementById("resultText");
 
     title.innerHTML = text;
-    title.style.color = type === "win" ? "cyan" : "red";
+    title.className = type === "win" ? "win" : "lose";
 
     screen.style.display = "block";
 

@@ -34,57 +34,95 @@ const MINION_CONFIG = {
 
 function createMinion(team, x, z) {
 
+    const teamColor = team === "player" ? 0x3d8bff : 0xff5a3d;
+
     const dwarf = new THREE.Group();
 
     // BODY
-    const body = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.35, 0.5, 0.8, 8),
-        new THREE.MeshStandardMaterial({
-            color: team === "player" ? 0x0088ff : 0xff6600
-        })
-    );
-    body.position.y = 0.8;
-    dwarf.add(body);
+    dwarf.add(makePart(
+        new THREE.CylinderGeometry(0.38, 0.5, 0.7, 12),
+        teamColor, 0, 0.65, 0
+    ));
+
+    // BELT
+    dwarf.add(makePart(
+        new THREE.CylinderGeometry(0.51, 0.51, 0.1, 12),
+        0x8a5a2b, 0, 0.5, 0, { outline: 1.12 }
+    ));
 
     // HEAD
-    const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.45, 16, 16),
-        new THREE.MeshStandardMaterial({ color: 0xffc49b })
-    );
-    head.position.y = 1.5;
-    dwarf.add(head);
+    dwarf.add(makePart(
+        new THREE.SphereGeometry(0.5, 16, 14),
+        0xffc49b, 0, 1.35, 0
+    ));
+
+    // HAT
+    dwarf.add(makePart(
+        new THREE.CylinderGeometry(0.6, 0.6, 0.08, 14),
+        0x2b2b3a, 0, 1.68, 0, { outline: 1.12 }
+    ));
+
+    dwarf.add(makePart(
+        new THREE.ConeGeometry(0.5, 0.75, 14),
+        teamColor, 0, 2.05, 0
+    ));
+
+    // NOSE
+    dwarf.add(makePart(
+        new THREE.SphereGeometry(0.13, 8, 8),
+        0xffb199, 0, 1.28, -0.5,
+        { outline: false, shadow: false }
+    ));
+
+    // EYES
+    for (let i = -1; i <= 1; i += 2) {
+
+        dwarf.add(makePart(
+            new THREE.SphereGeometry(0.07, 8, 8),
+            0x222222, i * 0.17, 1.42, -0.44,
+            { outline: false, shadow: false }
+        ));
+
+    }
 
     // BEARD
-    const beard = new THREE.Mesh(
-        new THREE.ConeGeometry(0.25, 0.45, 8),
-        new THREE.MeshStandardMaterial({ color: 0xffffff })
+    const beard = makePart(
+        new THREE.ConeGeometry(0.32, 0.6, 10),
+        0xffffff, 0, 1.0, -0.28
     );
     beard.rotation.x = Math.PI;
-    beard.position.set(0, 1.25, -0.35);
     dwarf.add(beard);
 
     // LEGS
     for (let i = -1; i <= 1; i += 2) {
 
-        const leg = new THREE.Mesh(
-            new THREE.BoxGeometry(0.15, 0.4, 0.15),
-            new THREE.MeshStandardMaterial({ color: 0x222222 })
-        );
+        dwarf.add(makePart(
+            new THREE.BoxGeometry(0.2, 0.35, 0.22),
+            0x4a3a2a, i * 0.16, 0.18, 0
+        ));
 
-        leg.position.set(i * 0.15, 0.25, 0);
-        dwarf.add(leg);
     }
 
     // AXE
-    const axe = new THREE.Mesh(
-        new THREE.BoxGeometry(0.12, 0.8, 0.35),
-        new THREE.MeshStandardMaterial({
-            color: 0xaaaaaa,
-            metalness: 0.8
-        })
-    );
-    axe.position.set(0.45, 0.9, 0);
+    const axe = new THREE.Group();
+
+    axe.add(makePart(
+        new THREE.CylinderGeometry(0.045, 0.045, 0.9, 8),
+        0x8a5a2b, 0, 0, 0, { outline: 1.3 }
+    ));
+
+    axe.add(makePart(
+        new THREE.BoxGeometry(0.5, 0.3, 0.08),
+        0xc8d0da, 0.2, 0.35, 0, { outline: 1.15 }
+    ));
+
+    axe.position.set(0.58, 0.85, 0);
+    axe.rotation.z = -0.2;
     dwarf.add(axe);
+
+    dwarf.scale.setScalar(0.85);
+
+    dwarf.userData.barHeight = 2.7;
 
     dwarf.position.set(x, 0, z);
 
@@ -247,7 +285,13 @@ function updateMinions(dt) {
             m.mesh.position.x += dx / distance * m.speed * dt;
             m.mesh.position.z += dz / distance * m.speed * dt;
 
+            // Loncat kecil saat berjalan
+            m.mesh.position.y =
+                Math.abs(Math.sin(performance.now() * 0.012 + i)) * 0.15;
+
         } else {
+
+            m.mesh.position.y = 0;
 
             m.timer -= dt;
 
@@ -274,6 +318,26 @@ function updateMinions(dt) {
 function damageEntity(target, damage) {
 
     if (!target || gameOver) return;
+
+    // Angka damage melayang (tidak untuk unit mati / base yang masih terlindungi)
+    const hittable =
+        target.mesh &&
+        !(target === Enemy && !Enemy.alive) &&
+        !(target.kind === "base" && target.protected) &&
+        !(target.kind === "tower" && !target.alive) &&
+        !(target.kind === "minion" && !target.alive);
+
+    if (hittable && typeof showDamageNumber === "function") {
+
+        showDamageNumber(
+            target.mesh.position,
+            damage,
+            target === Player
+                ? "hurt"
+                : (target.kind === "minion" ? "small" : "")
+        );
+
+    }
 
     // Hero musuh
     if (target === Enemy) {

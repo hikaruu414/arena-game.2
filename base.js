@@ -26,31 +26,96 @@ let gameOver = false;
 
 function createBase(team, x, z) {
 
-    const geometry = new THREE.BoxGeometry(
-        BASE_CONFIG.size,
-        BASE_CONFIG.size,
-        BASE_CONFIG.size
+    const color = team === "player" ? 0x3d8bff : 0xff4d4d;
+
+    const group = new THREE.Group();
+
+    // ALAS
+    group.add(makePart(
+        new THREE.CylinderGeometry(1.6, 1.9, 0.6, 10),
+        0x8d8fa3, 0, 0.3, 0
+    ));
+
+    group.add(makePart(
+        new THREE.CylinderGeometry(1.2, 1.4, 0.4, 10),
+        0xb7b9cc, 0, 0.8, 0
+    ));
+
+    // KRISTAL UTAMA
+    const crystal = makePart(
+        new THREE.OctahedronGeometry(0.95),
+        color, 0, 2.4, 0,
+        { material: { emissive: color, emissiveIntensity: 0.7 } }
     );
 
-    const material = new THREE.MeshStandardMaterial({
-        color: team === "player" ? 0x0066ff : 0xff2222
-    });
+    crystal.scale.y = 1.5;
 
-    const mesh = new THREE.Mesh(geometry, material);
+    group.add(crystal);
 
-    mesh.position.set(
-        x,
-        BASE_CONFIG.size / 2,
-        z
+    registerAnimated(crystal, "spin", 0.9);
+    registerAnimated(crystal, "bob", 1.6, 0.18);
+
+    // KRISTAL KECIL MENGORBIT
+    const orbit = new THREE.Group();
+
+    orbit.position.y = 1.9;
+
+    for (let i = 0; i < 3; i++) {
+
+        const a = i / 3 * Math.PI * 2;
+
+        orbit.add(makePart(
+            new THREE.OctahedronGeometry(0.22),
+            0xffffff, Math.cos(a) * 1.5, 0, Math.sin(a) * 1.5,
+            { material: { emissive: color, emissiveIntensity: 0.5 } }
+        ));
+
+    }
+
+    group.add(orbit);
+
+    registerAnimated(orbit, "spin", 1.2);
+
+    // PERISAI (terlihat selama tower masih hidup)
+    const shield = new THREE.Mesh(
+        new THREE.SphereGeometry(2.4, 24, 18),
+        new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.2,
+            depthWrite: false
+        })
     );
 
-    mesh.castShadow = true;
+    shield.position.y = 1.6;
 
-    scene.add(mesh);
+    group.add(shield);
+
+    // CINCIN DI TANAH
+    const ring = new THREE.Mesh(
+        new THREE.RingGeometry(2.1, 2.6, 36),
+        new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.DoubleSide
+        })
+    );
+
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.06;
+    group.add(ring);
+
+    group.userData.barHeight = 4.6;
+
+    group.position.set(x, 0, z);
+
+    scene.add(group);
 
     const base = {
         kind: "base",
-        mesh,
+        mesh: group,
+        shield: shield,
         team,
         hp: BASE_CONFIG.hp,
         maxHp: BASE_CONFIG.hp,
@@ -88,6 +153,10 @@ function updateBaseShield() {
         base.protected = tower
             ? (tower.alive && tower.hp > 0)
             : false;
+
+        if (base.shield) {
+            base.shield.visible = base.protected;
+        }
     }
 }
 
