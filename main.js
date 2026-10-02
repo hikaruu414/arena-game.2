@@ -23,6 +23,9 @@ window.addEventListener("keydown", (e) => {
 
     if (e.code !== "Escape") return;
 
+    // Setelah menang / kalah, game tidak bisa di-unpause
+    if (gameOver) return;
+
     paused = !paused;
 
     const pauseUI = document.getElementById("pauseText");
@@ -102,6 +105,14 @@ function gameLoop(time) {
 
     if (typeof updateTowers === "function") {
         updateTowers(dt);
+    }
+
+    if (typeof updateBaseShield === "function") {
+        updateBaseShield();
+    }
+
+    if (typeof updateUI === "function") {
+        updateUI();
     }
 
     /*======================================================

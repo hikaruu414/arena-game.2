@@ -579,150 +579,83 @@ function updateTowers(dt){
 
 /*==========================================================
     DAMAGE TARGET
+    (hero, player, dan minion) lewat damageEntity()
 ==========================================================*/
 
 
 function damageTowerTarget(target,damage){
 
-
-
-    // PLAYER
-
-    if(target===Player){
-
-
-        Player.hp-=damage;
-
-
-        updateUI();
-
-
-        return;
-
-
-    }
-
-
-
-
-
-    // ENEMY HERO
-
-    if(target===Enemy){
-
-
-        damageEnemy(damage);
-
-
-        return;
-
-
-    }
-
-
-
-
-
-
-    // MINION
-
-    if(target.hp!==undefined){
-
-
-
-        target.hp-=damage;
-
-
-
-        if(target.hp<=0){
-
-
-
-            target.hp=0;
-
-            target.alive=false;
-
-
-
-            scene.remove(
-
-                target.mesh
-
-            );
-
-
-        }
-
-
-    }
-
-
+    damageEntity(target,damage);
 
 }
 
 
 
-
-
-
-
-
-
 /*==========================================================
     DAMAGE TOWER
+    Dipakai minion dan player. Tower hancur = mesh dihapus
+    dan base timnya tidak lagi terlindungi.
 ==========================================================*/
 
 
-function damageTower(team,damage){
+function hurtTower(tower,damage){
 
-
-
-    const tower=
-
-    Towers.find(
-
-        t=>
-
-        t.team===team
-
-    );
-
-
-
-    if(!tower)
+    if(!tower || !tower.alive)
 
         return;
-
-
 
 
     tower.hp-=damage;
 
 
-
-
-
     if(tower.hp<=0){
-
-
 
         tower.hp=0;
 
-
         tower.alive=false;
 
+        scene.remove(tower.mesh);
 
+        if(typeof updateBaseShield==="function")
 
-        scene.remove(
+            updateBaseShield();
 
-            tower.mesh
+        if(typeof addMessage==="function")
 
-        );
+            addMessage(
 
+                tower.team==="enemy"
 
+                ?
+
+                "Tower Musuh Hancur!"
+
+                :
+
+                "Tower Kita Hancur!"
+
+            );
 
     }
 
+}
 
+
+
+function damageTower(team,damage){
+
+    hurtTower(
+
+        Towers.find(
+
+            t=>
+
+            t.team===team && t.alive
+
+        ),
+
+        damage
+
+    );
 
 }

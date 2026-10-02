@@ -33,6 +33,9 @@ const Enemy = {
 
 };
 
+// Waktu hero musuh hidup lagi setelah dikalahkan (detik)
+const ENEMY_RESPAWN_TIME = 8;
+
 /*==========================================================
     CREATE ENEMY
 ==========================================================*/
@@ -285,19 +288,27 @@ function updateEnemy(dt) {
             Enemy.speed *
             dt;
 
+        // Depan karakter = arah -z, jadi tambah PI
         Enemy.mesh.rotation.y =
-            Math.atan2(dx, dz);
+            Math.atan2(dx, dz) + Math.PI;
 
         /*================ WALK ANIMATION ================*/
 
-        const t = performance.now() * 0.01;
+        const walk =
+            Math.sin(performance.now() * 0.012) * 0.45;
 
         Enemy.mesh.children.forEach(part => {
 
-            if (part.geometry instanceof THREE.BoxGeometry) {
+            if (
+                part.isMesh &&
+                part.geometry instanceof THREE.BoxGeometry &&
+                part.position.y < 1
+            ) {
 
                 part.rotation.x =
-                    Math.sin(t * 8) * 0.15;
+                    part.position.x < 0
+                        ? walk
+                        : -walk;
 
             }
 
@@ -380,7 +391,7 @@ function updateEnemy(dt) {
 
 function damageEnemy(amount) {
 
-    if (!Enemy.alive || !Enemy.mesh) return;
+    if (!Enemy.alive || !Enemy.mesh || gameOver) return;
 
     Enemy.hp -= amount;
 
@@ -390,14 +401,18 @@ function damageEnemy(amount) {
 
         if (!obj.isMesh) return;
 
-        const oldColor = obj.material.color.clone();
+        // Warna asli disimpan sekali, supaya hit beruntun
+        // tidak membuat warna "asli" tersimpan sebagai putih.
+        if (!obj.userData.baseColor) {
+            obj.userData.baseColor = obj.material.color.clone();
+        }
 
         obj.material.color.set(0xffffff);
 
         setTimeout(() => {
 
-            if (obj.material) {
-                obj.material.color.copy(oldColor);
+            if (obj.material && obj.userData.baseColor) {
+                obj.material.color.copy(obj.userData.baseColor);
             }
 
         }, 100);
@@ -441,6 +456,15 @@ function damageEnemy(amount) {
             addMessage("Enemy Defeated");
         }
 
+        // Hidup lagi setelah beberapa detik
+        setTimeout(() => {
+
+            if (!gameOver) {
+                resetEnemy();
+            }
+
+        }, ENEMY_RESPAWN_TIME * 1000);
+
     }
 
 }
@@ -468,4 +492,4 @@ function resetEnemy() {
         updateUI();
     }
 
-}
+}

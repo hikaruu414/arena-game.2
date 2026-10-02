@@ -166,6 +166,25 @@ sunLight.castShadow=true;
 
 
 
+// Area bayangan menutupi seluruh arena 30x30
+sunLight.shadow.camera.left=-20;
+
+sunLight.shadow.camera.right=20;
+
+sunLight.shadow.camera.top=20;
+
+sunLight.shadow.camera.bottom=-20;
+
+sunLight.shadow.camera.near=1;
+
+sunLight.shadow.camera.far=40;
+
+sunLight.shadow.mapSize.set(1024,1024);
+
+sunLight.shadow.camera.updateProjectionMatrix();
+
+
+
 scene.add(
 
     sunLight

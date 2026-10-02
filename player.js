@@ -308,8 +308,9 @@ function updatePlayer(dt) {
         Player.mesh.position.z +=
             z * Player.speed * dt;
 
+        // Depan karakter = arah -z, jadi tambah PI
         Player.mesh.rotation.y =
-            Math.atan2(x, z);
+            Math.atan2(x, z) + Math.PI;
 
         /* Animasi kaki */
 
@@ -386,11 +387,14 @@ function updatePlayer(dt) {
 
 /*==========================================================
     PLAYER ATTACK
+    Menyerang semua musuh dalam jangkauan:
+    hero musuh, minion musuh, tower, dan base
+    (base hanya terkena kalau tower musuh sudah hancur).
 ==========================================================*/
 
 function playerAttack(){
 
-    if(!Player.mesh) return;
+    if(!Player.mesh || gameOver || typeof paused !== "undefined" && paused) return;
 
     if(Player.attackTimer > 0) return;
 
@@ -415,48 +419,54 @@ function playerAttack(){
 
     }
 
-    // Musuh belum ada
-    if(!Enemy || !Enemy.mesh || !Enemy.alive) return;
+    const pos = Player.mesh.position;
+    const range = Player.attackRange;
 
-    const distance = Player.mesh.position.distanceTo(
-        Enemy.mesh.position
-    );
+    // Hero musuh
+    if(Enemy.mesh && Enemy.alive){
 
-    function playerAttack(){
+        if(flatDistance(pos, Enemy.mesh.position) <= range){
 
-    if(Player.attackTimer > 0) return;
+            damageEntity(Enemy, Player.attackDamage);
 
-    Player.attackTimer = Player.attackCooldown;
+        }
 
-    // Letakkan animasi di sini
-
-    const sword = Player.mesh.getObjectByName("Sword");
-
-    if(sword){
-        sword.rotation.z = -1.5;
-
-        setTimeout(()=>{
-            if(Player.mesh){
-                sword.rotation.z = -0.5;
-            }
-        },120);
     }
 
-    // Baru cek musuh
-    if(!Enemy.mesh) return;
+    // Minion musuh
+    // (salin array: minion yang mati bisa dibersihkan saat loop)
+    for(const m of Minions.slice()){
 
-    const distance = Player.mesh.position.distanceTo(
-        Enemy.mesh.position
+        if(!m.alive || m.team !== "enemy") continue;
+
+        if(flatDistance(pos, m.mesh.position) <= range){
+
+            damageEntity(m, Player.attackDamage);
+
+        }
+
+    }
+
+    // Bangunan punya ukuran, jangkauannya sedikit lebih jauh
+    const buildingRange = range + 1.2;
+
+    const tower = Towers.find(
+        t => t.team === "enemy" && t.alive
     );
 
-    if(distance <= Player.attackRange){
-        damageEnemy(Player.attackDamage);
+    if(tower && flatDistance(pos, tower.mesh.position) <= buildingRange){
+
+        damageEntity(tower, Player.attackDamage);
+
     }
-}
 
-    if(distance <= Player.attackRange){
+    const base = Bases.find(
+        b => b.team === "enemy" && b.hp > 0
+    );
 
-        damageEnemy(Player.attackDamage);
+    if(base && flatDistance(pos, base.mesh.position) <= buildingRange){
+
+        damageEntity(base, Player.attackDamage);
 
     }
 

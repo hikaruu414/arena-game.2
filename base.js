@@ -1,6 +1,11 @@
 /*==========================================================
     Arena Battle 3D
     base.js FIXED
+
+    Sistem:
+    - Base tiap tim
+    - Base kebal selama tower timnya masih hidup
+    - Base hancur = game selesai
 ==========================================================*/
 
 "use strict";
@@ -11,6 +16,9 @@ const BASE_CONFIG = {
     hp: 2000,
     size: 2.5
 };
+
+// true setelah menang / kalah (dipakai ui.js dan main.js)
+let gameOver = false;
 
 /*==========================================================
     CREATE BASE
@@ -66,19 +74,20 @@ function createBases() {
 
 /*==========================================================
     UPDATE BASE SHIELD
+    Base dilindungi selama tower timnya masih hidup.
 ==========================================================*/
 
 function updateBaseShield() {
 
     for (const base of Bases) {
 
-        if (typeof Towers === "undefined") continue;
-
         const tower = Towers.find(
             t => t.team === base.team
         );
 
-        base.protected = tower ? tower.hp > 0 : false;
+        base.protected = tower
+            ? (tower.alive && tower.hp > 0)
+            : false;
     }
 }
 
@@ -88,20 +97,20 @@ function updateBaseShield() {
 
 function damageBase(team, damage) {
 
+    if (gameOver) return;
+
     const base = Bases.find(
         b => b.team === team
     );
 
-    if (!base) return;
+    if (!base || base.hp <= 0) return;
+
+    updateBaseShield();
 
     // Base tidak bisa diserang jika tower masih hidup
     if (base.protected) return;
 
-    base.hp -= damage;
-
-    if (base.hp < 0) {
-        base.hp = 0;
-    }
+    base.hp = Math.max(0, base.hp - damage);
 
     if (base.hp <= 0) {
 
@@ -124,36 +133,6 @@ function getBase(team) {
     );
 }
 
-/*==========================================================
-    GAME RESULT
-==========================================================*/
-
-function winGame() {
-
-    if (typeof showResult === "function") {
-        showResult("🏆 YOU WIN!", "win");
-        return;
-    }
-
-    const end = document.getElementById("pauseText");
-
-    if (end) {
-        end.innerHTML = "🏆 YOU WIN!";
-        end.style.display = "block";
-    }
-}
-
-function loseGame() {
-
-    if (typeof showResult === "function") {
-        showResult("💀 DEFEAT", "lose");
-        return;
-    }
-
-    const end = document.getElementById("pauseText");
-
-    if (end) {
-        end.innerHTML = "💀 DEFEAT";
-        end.style.display = "block";
-    }
-}
+/*
+    winGame() dan loseGame() didefinisikan di ui.js
+*/
