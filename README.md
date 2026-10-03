@@ -21,6 +21,7 @@ Buka `index.html` di browser (atau jalankan server statis, misalnya `python3 -m 
 - Setiap 10 detik, 3 minion kurcaci muncul dari tiap sisi. Minion melawan minion dan hero lawan yang dekat, lalu maju ke tower dan base.
 - Serangan Hikaru mengenai semua musuh dalam jangkauan: hero, minion, tower, dan base.
 - Hero musuh (Dark Knight) hidup lagi 8 detik setelah dikalahkan.
+- Tiap tim punya **lingkaran penyembuh** hijau di samping base. Hero yang berdiri di dalamnya memulihkan 60 HP per detik. Lokasinya ditandai di minimap, dan saat HP di bawah 30% muncul peringatan di layar.
 
 ## Tampilan
 
