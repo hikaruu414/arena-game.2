@@ -106,6 +106,30 @@ function createBase(team, x, z) {
     ring.position.y = 0.06;
     group.add(ring);
 
+    // BENDERA TIM (berkibar)
+    group.add(makePart(
+        new THREE.CylinderGeometry(0.05, 0.06, 3.0, 8),
+        0xf2f2f2, 2.0, 1.5, 1.5, { outline: 1.3 }
+    ));
+
+    group.add(makePart(
+        new THREE.SphereGeometry(0.1, 8, 8),
+        0xffc83d, 2.0, 3.05, 1.5, { outline: 1.2 }
+    ));
+
+    const flagPivot = new THREE.Group();
+
+    flagPivot.position.set(2.0, 2.6, 1.5);
+
+    flagPivot.add(makePart(
+        new THREE.BoxGeometry(0.9, 0.5, 0.04),
+        color, 0.45, 0, 0, { outline: 1.1 }
+    ));
+
+    group.add(flagPivot);
+
+    registerAnimated(flagPivot, "wave", 2.5, 0.4);
+
     group.userData.barHeight = 4.6;
 
     group.position.set(x, 0, z);

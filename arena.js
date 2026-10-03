@@ -350,9 +350,12 @@ createWall(15, 0, 0.6, 30.5);
     DEKORASI
 ==========================================================*/
 
-function createTree(x, z, size) {
+// simple = true: tanpa outline dan bayangan (untuk pohon jauh)
+function createTree(x, z, size, simple) {
 
     const s = size || 1;
+
+    const o = simple ? { outline: false, shadow: false } : undefined;
 
     const tree = new THREE.Group();
 
@@ -361,7 +364,8 @@ function createTree(x, z, size) {
         0x8a5a2b,
         0,
         0.6 * s,
-        0
+        0,
+        o
     ));
 
     // Daun bertumpuk (bulat seperti kartun)
@@ -370,7 +374,8 @@ function createTree(x, z, size) {
         0x2fa84f,
         0,
         1.7 * s,
-        0
+        0,
+        o
     ));
 
     tree.add(makePart(
@@ -378,7 +383,8 @@ function createTree(x, z, size) {
         0x3dc25e,
         0.1 * s,
         2.45 * s,
-        0.05 * s
+        0.05 * s,
+        o
     ));
 
     tree.position.set(x, 0, z);
@@ -516,7 +522,10 @@ function addWorldObject(obj) {
 
 /*==========================================================
     ANIMASI BENDA
-    kind: "spin" (berputar), "bob" (naik turun)
+    kind:
+      "spin"  berputar        "bob"   naik turun
+      "pulse" berdenyut       "wave"  bergoyang (bendera)
+      "drift" bergeser pelan (amount = batas sebelum kembali)
 ==========================================================*/
 
 const animatedObjects = [];
@@ -535,11 +544,49 @@ function registerAnimated(obj, kind, speed, amount) {
 }
 
 /*==========================================================
-    EFEK CINCIN (skill)
+    EFEK SINGKAT
+    Tiap efek punya durasi dan fungsi step(k), k = 0..1.
 ==========================================================*/
 
 const effects = [];
 
+// Geometri bersama (tidak dibuang saat efek selesai)
+const sparkGeometry = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+const puffGeometry = new THREE.SphereGeometry(0.4, 8, 6);
+const projectileGeometry = new THREE.SphereGeometry(0.2, 8, 6);
+
+const SHARED_GEOMETRIES = [sparkGeometry, puffGeometry, projectileGeometry];
+
+function addEffect(object, duration, step) {
+
+    scene.add(object);
+
+    effects.push({
+        mesh: object,
+        time: 0,
+        duration: duration,
+        step: step
+    });
+
+}
+
+function disposeObject(root) {
+
+    root.traverse(obj => {
+
+        if (obj.geometry && !SHARED_GEOMETRIES.includes(obj.geometry)) {
+            obj.geometry.dispose();
+        }
+
+        if (obj.material) {
+            obj.material.dispose();
+        }
+
+    });
+
+}
+
+// Cincin yang melebar di tanah (skill)
 function spawnRingEffect(pos, color, radius, duration) {
 
     const mesh = new THREE.Mesh(
@@ -556,14 +603,250 @@ function spawnRingEffect(pos, color, radius, duration) {
     mesh.position.set(pos.x, 0.12, pos.z);
     mesh.scale.setScalar(0.2);
 
-    scene.add(mesh);
+    const r = radius || 3;
 
-    effects.push({
-        mesh: mesh,
-        time: 0,
-        duration: duration || 0.4,
-        radius: radius || 3
+    addEffect(mesh, duration || 0.4, k => {
+
+        // Membesar cepat lalu melambat
+        const ease = 1 - (1 - k) * (1 - k);
+
+        mesh.scale.setScalar(0.2 + (r - 0.2) * ease);
+        mesh.material.opacity = 0.9 * (1 - k);
+
     });
+
+}
+
+// Busur tebasan di depan hero (facingY = rotation.y hero)
+function spawnSlashEffect(pos, facingY, color) {
+
+    const pivot = new THREE.Group();
+
+    const material = new THREE.MeshBasicMaterial({
+        color: color,
+        transparent: true,
+        opacity: 0.9,
+        side: THREE.DoubleSide,
+        depthWrite: false
+    });
+
+    const arc = new THREE.Mesh(
+        new THREE.RingGeometry(0.75, 1.5, 20, 1, -0.95, 1.9),
+        material
+    );
+
+    arc.rotation.x = -Math.PI / 2;
+
+    pivot.add(arc);
+
+    // Depan karakter = arah -z
+    pivot.position.set(
+        pos.x - Math.sin(facingY) * 0.5,
+        1.0,
+        pos.z - Math.cos(facingY) * 0.5
+    );
+
+    const base = facingY + Math.PI / 2;
+
+    pivot.rotation.y = base;
+
+    addEffect(pivot, 0.22, k => {
+
+        pivot.scale.setScalar(0.8 + 0.6 * k);
+        pivot.rotation.y = base + (k - 0.5) * 0.8;
+        material.opacity = 0.9 * (1 - k);
+
+    });
+
+}
+
+// Asap / debu yang membesar lalu pudar (unit mati, bangunan hancur)
+function spawnPuff(pos, color, size) {
+
+    const group = new THREE.Group();
+    const materials = [];
+
+    for (let i = 0; i < 3; i++) {
+
+        const material = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.7,
+            depthWrite: false
+        });
+
+        const puff = new THREE.Mesh(puffGeometry, material);
+
+        puff.position.set((i - 1) * 0.35, 0.3 + i * 0.1, (i % 2 - 0.5) * 0.3);
+
+        group.add(puff);
+        materials.push(material);
+
+    }
+
+    const s = size || 1;
+
+    group.position.set(pos.x, 0.3, pos.z);
+
+    addEffect(group, 0.5, k => {
+
+        group.scale.setScalar((0.5 + k * 1.2) * s);
+        group.position.y = 0.3 + k * 0.8;
+
+        materials.forEach(m => {
+            m.opacity = 0.7 * (1 - k);
+        });
+
+    });
+
+}
+
+// Bola energi dari tower ke target (hanya visual)
+function spawnProjectile(from, to, color) {
+
+    const mesh = new THREE.Mesh(
+        projectileGeometry,
+        new THREE.MeshBasicMaterial({ color: color })
+    );
+
+    mesh.position.set(from.x, from.y, from.z);
+
+    addEffect(mesh, 0.22, k => {
+
+        mesh.position.set(
+            from.x + (to.x - from.x) * k,
+            from.y + (to.y - from.y) * k + Math.sin(k * Math.PI) * 0.6,
+            from.z + (to.z - from.z) * k
+        );
+
+        mesh.scale.setScalar(1 - 0.4 * k);
+
+    });
+
+}
+
+/*==========================================================
+    PARTIKEL PERCIKAN
+    Dibatasi supaya tetap ringan di HP.
+==========================================================*/
+
+const particles = [];
+
+const MAX_PARTICLES = 70;
+
+function spawnSparks(pos, color, count, speed, up) {
+
+    for (let i = 0; i < count; i++) {
+
+        if (particles.length >= MAX_PARTICLES) return;
+
+        const material = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 1
+        });
+
+        const mesh = new THREE.Mesh(sparkGeometry, material);
+
+        mesh.position.set(pos.x, pos.y, pos.z);
+
+        const angle = Math.random() * 6.2832;
+        const power = (speed || 3) * (0.5 + Math.random() * 0.5);
+        const life = 0.35 + Math.random() * 0.25;
+
+        scene.add(mesh);
+
+        particles.push({
+            mesh: mesh,
+            material: material,
+            vx: Math.cos(angle) * power,
+            vy: (up || 3) * (0.6 + Math.random() * 0.8),
+            vz: Math.sin(angle) * power,
+            life: life,
+            maxLife: life
+        });
+
+    }
+
+}
+
+/*==========================================================
+    KILATAN PUTIH SAAT TERKENA SERANGAN
+==========================================================*/
+
+function flashMesh(root, duration) {
+
+    if (!root) return;
+
+    root.traverse(obj => {
+
+        if (!obj.isMesh || obj.userData.isOutline) return;
+
+        const m = obj.material;
+
+        if (!m || !m.emissive || !m.emissive.getHex) return;
+
+        // Simpan nilai asli sekali saja
+        if (obj.userData.baseEmissive === undefined) {
+            obj.userData.baseEmissive = m.emissive.getHex();
+            obj.userData.baseEmissiveIntensity = m.emissiveIntensity;
+        }
+
+        m.emissive.setHex(0xffffff);
+        m.emissiveIntensity = 0.9;
+
+    });
+
+    setTimeout(() => {
+
+        root.traverse(obj => {
+
+            if (obj.userData.baseEmissive === undefined) return;
+
+            const m = obj.material;
+
+            if (!m || !m.emissive) return;
+
+            m.emissive.setHex(obj.userData.baseEmissive);
+            m.emissiveIntensity = obj.userData.baseEmissiveIntensity;
+
+        });
+
+    }, duration || 90);
+
+}
+
+/*==========================================================
+    GETAR KAMERA
+==========================================================*/
+
+let shakePower = 0;
+let shakeTime = 0;
+let shakeDuration = 0.001;
+
+function shakeCamera(power, duration) {
+
+    // Jangan menimpa getaran yang masih lebih kuat
+    if (power < shakePower * (shakeTime / shakeDuration)) return;
+
+    shakePower = power;
+    shakeTime = duration;
+    shakeDuration = duration;
+
+}
+
+function getShakeOffset() {
+
+    if (shakeTime <= 0) {
+        return { x: 0, z: 0 };
+    }
+
+    const amp = shakePower * (shakeTime / shakeDuration);
+
+    return {
+        x: (Math.random() - 0.5) * 2 * amp,
+        z: (Math.random() - 0.5) * 2 * amp
+    };
 
 }
 
@@ -577,6 +860,8 @@ function updateScene(dt) {
 
     sceneTime += dt;
 
+    shakeTime = Math.max(0, shakeTime - dt);
+
     for (const a of animatedObjects) {
 
         if (a.kind === "spin") {
@@ -589,10 +874,30 @@ function updateScene(dt) {
                 a.baseY +
                 Math.sin(sceneTime * a.speed + a.phase) * a.amount;
 
+        } else if (a.kind === "pulse") {
+
+            a.obj.scale.setScalar(
+                1 + Math.sin(sceneTime * a.speed + a.phase) * a.amount
+            );
+
+        } else if (a.kind === "wave") {
+
+            a.obj.rotation.y =
+                Math.sin(sceneTime * a.speed + a.phase) * a.amount;
+
+        } else if (a.kind === "drift") {
+
+            a.obj.position.x += a.speed * dt;
+
+            if (a.obj.position.x > a.amount) {
+                a.obj.position.x = -a.amount;
+            }
+
         }
 
     }
 
+    // Efek singkat
     for (let i = effects.length - 1; i >= 0; i--) {
 
         const e = effects[i];
@@ -601,17 +906,12 @@ function updateScene(dt) {
 
         const k = Math.min(1, e.time / e.duration);
 
-        // Membesar cepat lalu melambat
-        const ease = 1 - (1 - k) * (1 - k);
-
-        e.mesh.scale.setScalar(0.2 + (e.radius - 0.2) * ease);
-        e.mesh.material.opacity = 0.9 * (1 - k);
+        e.step(k);
 
         if (k >= 1) {
 
             scene.remove(e.mesh);
-            e.mesh.geometry.dispose();
-            e.mesh.material.dispose();
+            disposeObject(e.mesh);
 
             effects.splice(i, 1);
 
@@ -619,7 +919,189 @@ function updateScene(dt) {
 
     }
 
+    // Partikel percikan
+    for (let i = particles.length - 1; i >= 0; i--) {
+
+        const p = particles[i];
+
+        p.life -= dt;
+
+        if (p.life <= 0) {
+
+            scene.remove(p.mesh);
+            p.material.dispose();
+
+            particles.splice(i, 1);
+
+            continue;
+
+        }
+
+        p.vy -= 14 * dt;
+
+        p.mesh.position.x += p.vx * dt;
+        p.mesh.position.y += p.vy * dt;
+        p.mesh.position.z += p.vz * dt;
+
+        // Memantul pelan di tanah
+        if (p.mesh.position.y < 0.05) {
+            p.mesh.position.y = 0.05;
+            p.vy *= -0.3;
+            p.vx *= 0.6;
+            p.vz *= 0.6;
+        }
+
+        const k = p.life / p.maxLife;
+
+        p.material.opacity = k;
+        p.mesh.scale.setScalar(0.4 + k * 0.8);
+        p.mesh.rotation.x += dt * 8;
+
+    }
+
 }
+
+/*==========================================================
+    DEKORASI HIDUP
+    (setelah sistem animasi, karena memakai registerAnimated)
+==========================================================*/
+
+// Obor di tepi lane
+function createTorch(x, z) {
+
+    const torch = new THREE.Group();
+
+    torch.add(makePart(
+        new THREE.CylinderGeometry(0.08, 0.11, 1.3, 8),
+        0x6b4423, 0, 0.65, 0
+    ));
+
+    torch.add(makePart(
+        new THREE.CylinderGeometry(0.24, 0.14, 0.2, 10),
+        0x4a4a58, 0, 1.38, 0
+    ));
+
+    // Api: kerucut oranye + halo transparan, berdenyut
+    const fire = new THREE.Group();
+
+    fire.position.y = 1.65;
+
+    fire.add(new THREE.Mesh(
+        new THREE.ConeGeometry(0.15, 0.45, 8),
+        new THREE.MeshBasicMaterial({ color: 0xffa534 })
+    ));
+
+    const inner = new THREE.Mesh(
+        new THREE.ConeGeometry(0.08, 0.28, 8),
+        new THREE.MeshBasicMaterial({ color: 0xffe27a })
+    );
+
+    inner.position.y = -0.04;
+
+    fire.add(inner);
+
+    fire.add(new THREE.Mesh(
+        new THREE.SphereGeometry(0.42, 12, 10),
+        new THREE.MeshBasicMaterial({
+            color: 0xffa534,
+            transparent: true,
+            opacity: 0.16,
+            depthWrite: false
+        })
+    ));
+
+    torch.add(fire);
+
+    registerAnimated(fire, "pulse", 9, 0.18);
+
+    torch.position.set(x, 0, z);
+
+    scene.add(torch);
+
+}
+
+[-9, -4.5, 4.5, 9].forEach(x => {
+
+    createTorch(x, 3.5);
+    createTorch(x, -3.5);
+
+});
+
+// Kunang-kunang melayang di rumput
+(function createFireflies() {
+
+    const rand = seededRandom(55);
+
+    for (let i = 0; i < 16; i++) {
+
+        const x = rand() * 26 - 13;
+        let z = rand() * 20 + 4;
+
+        if (rand() < 0.5) z = -z;
+
+        const fly = new THREE.Mesh(
+            new THREE.SphereGeometry(0.07, 6, 6),
+            new THREE.MeshBasicMaterial({ color: 0xfff3a0 })
+        );
+
+        fly.position.set(x, 1 + rand() * 1.2, z);
+
+        scene.add(fly);
+
+        registerAnimated(fly, "bob", 1.2 + rand(), 0.25);
+        registerAnimated(fly, "pulse", 3 + rand() * 2, 0.35);
+
+    }
+
+})();
+
+// Bayangan awan yang bergeser pelan di tanah
+(function createCloudShadows() {
+
+    const spots = [[-18, -8, 5], [-4, 6, 4], [10, -3, 6], [20, 9, 4.5]];
+
+    spots.forEach(s => {
+
+        const shadow = new THREE.Mesh(
+            new THREE.CircleGeometry(1, 24),
+            new THREE.MeshBasicMaterial({
+                color: 0x000000,
+                transparent: true,
+                opacity: 0.07,
+                depthWrite: false
+            })
+        );
+
+        shadow.rotation.x = -Math.PI / 2;
+        shadow.scale.set(s[2], s[2] * 0.6, 1);
+        shadow.position.set(s[0], 0.08, s[1]);
+
+        scene.add(shadow);
+
+        registerAnimated(shadow, "drift", 0.7, 24);
+
+    });
+
+})();
+
+// Barisan pohon di luar pagar sebagai bingkai arena
+(function createOuterTrees() {
+
+    for (let x = -14; x <= 14; x += 4) {
+
+        createTree(x, -18, 1.1 + (x % 3 === 0 ? 0.2 : 0), true);
+        createTree(x + 2, 18, 1.0 + (x % 3 === 0 ? 0.25 : 0), true);
+
+    }
+
+    for (let z = -10; z <= 10; z += 5) {
+
+        createTree(-18, z, 1.1, true);
+        createTree(18, z + 2, 1.15, true);
+
+    }
+
+})();
 
 /*==========================================================
     RESIZE

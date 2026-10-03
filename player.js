@@ -50,10 +50,11 @@ function createPlayer(){
     ));
 
     // CAPE
-    hikaru.add(makePart(
+    const cape = makePart(
         new THREE.BoxGeometry(0.95,1.1,0.07),
         0xe84545, 0, 1.08, 0.45
-    ));
+    );
+    hikaru.add(cape);
 
     // HEAD (besar, gaya chibi)
     hikaru.add(makePart(
@@ -170,12 +171,42 @@ function createPlayer(){
     blob.position.y = 0.05;
     hikaru.add(blob);
 
+    // Cincin hero di tanah (4 busur, berputar pelan)
+    const aura = new THREE.Group();
+
+    aura.position.y = 0.07;
+
+    for (let i = 0; i < 4; i++) {
+
+        const arcMesh = new THREE.Mesh(
+            new THREE.RingGeometry(0.85, 1.05, 14, 1, i * Math.PI / 2, Math.PI / 3),
+            new THREE.MeshBasicMaterial({
+                color: 0x4cd964,
+                transparent: true,
+                opacity: 0.85,
+                side: THREE.DoubleSide
+            })
+        );
+
+        arcMesh.rotation.x = -Math.PI / 2;
+
+        aura.add(arcMesh);
+
+    }
+
+    hikaru.add(aura);
+
     hikaru.userData.barHeight = 3.4;
 
     hikaru.name = "Hikaru";
     hikaru.position.set(0,0,5);
 
     Player.mesh = hikaru;
+    Player.cape = cape;
+    Player.sword = sword;
+    Player.aura = aura;
+    Player.swingTime = 0;
+    Player.spinTime = 0;
 
     scene.add(hikaru);
 }
@@ -439,6 +470,49 @@ function updatePlayer(dt) {
             14
         );
 
+    /*================ ANIMASI ================*/
+
+    const clock = performance.now() * 0.001;
+
+    // Naik turun saat jalan, napas pelan saat diam
+    Player.mesh.position.y = length > 0
+        ? Math.abs(Math.sin(clock * 12)) * 0.12
+        : (Math.sin(clock * 2) + 1) * 0.02;
+
+    // Jubah bergoyang
+    if (Player.cape) {
+        Player.cape.rotation.x = length > 0
+            ? 0.15 + Math.sin(clock * 12) * 0.12
+            : 0.04 + Math.sin(clock * 2) * 0.02;
+    }
+
+    // Cincin hero berputar
+    if (Player.aura) {
+        Player.aura.rotation.y += dt * 1.2;
+    }
+
+    // Ayunan pedang
+    if (Player.sword) {
+
+        if (Player.swingTime > 0) {
+
+            Player.swingTime -= dt;
+
+            const progress = 1 - Math.max(0, Player.swingTime) / 0.25;
+            const swing = Math.sin(progress * Math.PI);
+
+            Player.sword.rotation.z = -0.5 - swing * 1.8;
+            Player.sword.rotation.x = -swing * 0.7;
+
+        } else {
+
+            Player.sword.rotation.z = -0.5;
+            Player.sword.rotation.x = 0;
+
+        }
+
+    }
+
     /*================ SKILL COOLDOWN ================*/
 
     for (const key in Skills) {
@@ -509,24 +583,10 @@ function playerAttack(){
 
     Player.attackTimer = Player.attackCooldown;
 
-    // Animasi pedang
-    const sword = Player.mesh.getObjectByName("Sword");
+    // Ayunan pedang dan busur tebasan (animasi di updatePlayer)
+    Player.swingTime = 0.25;
 
-    if(sword){
-
-        sword.rotation.z = -1.5;
-
-        setTimeout(()=>{
-
-            if(Player.mesh){
-
-                sword.rotation.z = -0.5;
-
-            }
-
-        },120);
-
-    }
+    spawnSlashEffect(Player.mesh.position, Player.mesh.rotation.y, 0xffffff);
 
     const pos = Player.mesh.position;
     const range = Player.attackRange;
@@ -619,6 +679,12 @@ function castSlash() {
 
     spawnRingEffect(pos, 0xffc83d, skill.radius, 0.4);
 
+    // Dua busur tebasan berlawanan arah + getar kamera
+    spawnSlashEffect(pos, Player.mesh.rotation.y, 0xffc83d);
+    spawnSlashEffect(pos, Player.mesh.rotation.y + Math.PI, 0xffc83d);
+
+    shakeCamera(0.18, 0.25);
+
     // Hero musuh
     if (Enemy.mesh && Enemy.alive &&
         flatDistance(pos, Enemy.mesh.position) <= skill.radius) {
@@ -674,6 +740,11 @@ function castHeal() {
     Player.hp = Math.min(Player.maxHp, Player.hp + skill.amount);
 
     spawnRingEffect(Player.mesh.position, 0x4cd964, 2.2, 0.5);
+
+    spawnSparks(
+        { x: Player.mesh.position.x, y: 0.5, z: Player.mesh.position.z },
+        0x7dff9a, 10, 1.5, 5
+    );
 
     if (typeof showDamageNumber === "function") {
 

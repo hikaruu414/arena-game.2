@@ -286,6 +286,43 @@ body > canvas:not(#minimap){
 
 
 /*==========================================================
+    KILAT MERAH (player terluka)
+==========================================================*/
+
+#hurtFlash{
+
+    position:fixed;
+
+    inset:0;
+
+    z-index:12;
+
+    pointer-events:none;
+
+    opacity:0;
+
+    background:
+    radial-gradient(
+        ellipse at center,
+        rgba(255,0,0,0) 55%,
+        rgba(255,40,40,.55) 100%
+    );
+
+}
+
+#hurtFlash.show{
+    animation:hurtPulse .35s ease-out;
+}
+
+@keyframes hurtPulse{
+
+    0%{ opacity:.9; }
+    100%{ opacity:0; }
+
+}
+
+
+/*==========================================================
     STATUS PENYEMBUHAN / HP RENDAH
 ==========================================================*/
 

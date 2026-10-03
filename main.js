@@ -85,10 +85,13 @@ function updateCamera() {
     camera.position.z +=
         (target.z + 10 - camera.position.z) * 0.08;
 
+    // Getaran kamera (hit, skill, ledakan)
+    const shake = getShakeOffset();
+
     camera.lookAt(
-        target.x,
+        target.x + shake.x,
         0,
-        target.z - 1
+        target.z - 1 + shake.z
     );
 
 }

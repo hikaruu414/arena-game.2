@@ -457,6 +457,25 @@ function showDamageNumber(pos, text, kind) {
 }
 
 /*==========================================================
+    KILAT MERAH SAAT PLAYER TERLUKA
+==========================================================*/
+
+function flashHurt() {
+
+    const el = document.getElementById("hurtFlash");
+
+    if (!el) return;
+
+    // Ulang animasi CSS dari awal
+    el.classList.remove("show");
+
+    void el.offsetWidth;
+
+    el.classList.add("show");
+
+}
+
+/*==========================================================
     BANNER PESAN (tower hancur, dll)
 ==========================================================*/
 
