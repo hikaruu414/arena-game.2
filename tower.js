@@ -54,149 +54,67 @@ function createTower(team,x,z){
 
 
 
-    // BADAN MENARA
+    const color = team==="player" ? 0x3d8bff : 0xff4d4d;
 
-    const base =
-    new THREE.Mesh(
+    const dark = team==="player" ? 0x2a5fc0 : 0xb82e2e;
 
-        new THREE.CylinderGeometry(
+    // ALAS
+    tower.add(makePart(
+        new THREE.CylinderGeometry(1.6,1.8,0.4,14),
+        0x8d8fa3, 0, 0.2, 0
+    ));
 
-            1,
+    // BADAN BAWAH
+    tower.add(makePart(
+        new THREE.CylinderGeometry(1.1,1.35,1.8,14),
+        0xb7b9cc, 0, 1.3, 0
+    ));
 
-            1.4,
+    // PITA WARNA TIM
+    tower.add(makePart(
+        new THREE.CylinderGeometry(1.16,1.16,0.3,14),
+        color, 0, 2.3, 0, { outline:1.06 }
+    ));
 
-            2.5,
+    // BADAN ATAS
+    tower.add(makePart(
+        new THREE.CylinderGeometry(0.95,1.1,1.0,14),
+        0xc9cbdd, 0, 2.95, 0
+    ));
 
-            10
+    // PUNCAK
+    tower.add(makePart(
+        new THREE.CylinderGeometry(1.3,1.0,0.45,14),
+        dark, 0, 3.65, 0
+    ));
 
-        ),
-
-        new THREE.MeshStandardMaterial({
-
-            color:
-
-            team==="player"
-
-            ?
-
-            0x0066ff
-
-            :
-
-            0xaa0000,
-
-            metalness:0.5
-
-        })
-
+    // KRISTAL (melayang dan berputar)
+    const crystal = makePart(
+        new THREE.OctahedronGeometry(0.5),
+        color, 0, 4.55, 0,
+        { material:{ emissive:color, emissiveIntensity:0.7 } }
     );
-
-
-
-    base.position.y=1.25;
-
-
-
-    tower.add(base);
-
-
-
-
-
-
-
-    // ATAP
-
-    const roof =
-    new THREE.Mesh(
-
-        new THREE.ConeGeometry(
-
-            1.2,
-
-            1,
-
-            10
-
-        ),
-
-        new THREE.MeshStandardMaterial({
-
-            color:0x222222
-
-        })
-
-    );
-
-
-
-    roof.position.y=3;
-
-
-
-    tower.add(roof);
-
-
-
-
-
-
-
-
-    // KRISTAL
-
-    const crystal =
-    new THREE.Mesh(
-
-        new THREE.OctahedronGeometry(
-
-            0.35
-
-        ),
-
-        new THREE.MeshStandardMaterial({
-
-            color:
-
-            team==="player"
-
-            ?
-
-            0x00ffff
-
-            :
-
-            0xff3333,
-
-
-            emissive:
-
-            team==="player"
-
-            ?
-
-            0x0033ff
-
-            :
-
-            0xff0000
-
-        })
-
-    );
-
-
-
-    crystal.position.y=3.7;
-
-
 
     tower.add(crystal);
 
+    registerAnimated(crystal,"spin",1.6);
+    registerAnimated(crystal,"bob",2,0.15);
 
+    // CINCIN DI TANAH
+    const ring = new THREE.Mesh(
+        new THREE.RingGeometry(1.95,2.4,36),
+        new THREE.MeshBasicMaterial({
+            color:color,
+            transparent:true,
+            opacity:0.65,
+            side:THREE.DoubleSide
+        })
+    );
+    ring.rotation.x = -Math.PI/2;
+    ring.position.y = 0.06;
+    tower.add(ring);
 
-
-
+    tower.userData.barHeight = 5.7;
 
     tower.position.set(
 
@@ -579,150 +497,83 @@ function updateTowers(dt){
 
 /*==========================================================
     DAMAGE TARGET
+    (hero, player, dan minion) lewat damageEntity()
 ==========================================================*/
 
 
 function damageTowerTarget(target,damage){
 
-
-
-    // PLAYER
-
-    if(target===Player){
-
-
-        Player.hp-=damage;
-
-
-        updateUI();
-
-
-        return;
-
-
-    }
-
-
-
-
-
-    // ENEMY HERO
-
-    if(target===Enemy){
-
-
-        damageEnemy(damage);
-
-
-        return;
-
-
-    }
-
-
-
-
-
-
-    // MINION
-
-    if(target.hp!==undefined){
-
-
-
-        target.hp-=damage;
-
-
-
-        if(target.hp<=0){
-
-
-
-            target.hp=0;
-
-            target.alive=false;
-
-
-
-            scene.remove(
-
-                target.mesh
-
-            );
-
-
-        }
-
-
-    }
-
-
+    damageEntity(target,damage);
 
 }
 
 
 
-
-
-
-
-
-
 /*==========================================================
     DAMAGE TOWER
+    Dipakai minion dan player. Tower hancur = mesh dihapus
+    dan base timnya tidak lagi terlindungi.
 ==========================================================*/
 
 
-function damageTower(team,damage){
+function hurtTower(tower,damage){
 
-
-
-    const tower=
-
-    Towers.find(
-
-        t=>
-
-        t.team===team
-
-    );
-
-
-
-    if(!tower)
+    if(!tower || !tower.alive)
 
         return;
-
-
 
 
     tower.hp-=damage;
 
 
-
-
-
     if(tower.hp<=0){
-
-
 
         tower.hp=0;
 
-
         tower.alive=false;
 
+        scene.remove(tower.mesh);
 
+        if(typeof updateBaseShield==="function")
 
-        scene.remove(
+            updateBaseShield();
 
-            tower.mesh
+        if(typeof addMessage==="function")
 
-        );
+            addMessage(
 
+                tower.team==="enemy"
 
+                ?
+
+                "Tower Musuh Hancur!"
+
+                :
+
+                "Tower Kita Hancur!"
+
+            );
 
     }
 
+}
 
+
+
+function damageTower(team,damage){
+
+    hurtTower(
+
+        Towers.find(
+
+            t=>
+
+            t.team===team && t.alive
+
+        ),
+
+        damage
+
+    );
 
 }

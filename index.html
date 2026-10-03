@@ -18,95 +18,147 @@
 <body>
 
     <!--======================================================
-        HUD
+        HUD KIRI ATAS: potret hero + HP
     =======================================================-->
 
-    <div id="gameUI">
+    <div id="hudTopLeft">
 
-        <div id="hp">
-            HP :
-            <span id="playerHP">500</span>
+        <div class="avatar blue">
+
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+                <circle cx="32" cy="34" r="19" fill="#ffd7b5"/>
+                <path d="M12 32 C10 12 54 12 52 32 C48 22 38 20 32 20 C26 20 16 22 12 32Z" fill="#1c2250"/>
+                <path d="M20 12 L24 2 L29 12Z M30 11 L34 0 L38 11Z M40 12 L44 3 L48 14Z" fill="#1c2250"/>
+                <ellipse cx="24" cy="36" rx="4.5" ry="5.5" fill="#fff"/>
+                <ellipse cx="40" cy="36" rx="4.5" ry="5.5" fill="#fff"/>
+                <circle cx="24.5" cy="37" r="3" fill="#1e90ff"/>
+                <circle cx="39.5" cy="37" r="3" fill="#1e90ff"/>
+                <circle cx="25.5" cy="35.5" r="1" fill="#fff"/>
+                <circle cx="40.5" cy="35.5" r="1" fill="#fff"/>
+                <ellipse cx="18" cy="43" rx="3" ry="2" fill="#ff9aa8"/>
+                <ellipse cx="46" cy="43" rx="3" ry="2" fill="#ff9aa8"/>
+                <path d="M28 47 Q32 50 36 47" stroke="#6b2f2f" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+            </svg>
+
+            <span class="level">1</span>
+
         </div>
 
-        <div id="enemyHP">
-            Enemy :
-            <span id="enemyHealth">500</span>
+        <div class="hpPanel">
+
+            <div class="heroName">Hikaru</div>
+
+            <div class="hpTrack">
+
+                <div id="playerHealthBar" class="hpFill ally"></div>
+
+                <div class="hpText">
+                    <span id="playerHP">500</span>
+                </div>
+
+            </div>
+
         </div>
 
     </div>
 
     <!--======================================================
-        PLAYER HP BAR
+        HUD TENGAH ATAS: skor, waktu, HP musuh
     =======================================================-->
 
-    <div id="playerBar">
-        <div id="playerHealthBar"></div>
-    </div>
+    <div id="hudTopCenter">
 
-    <!--======================================================
-    MOBILE CONTROL
-=======================================================-->
+        <div id="scoreboard">
 
-<div id="mobileControls">
+            <span class="score blueScore">🏰 <b id="blueTowers">1</b></span>
 
-    <div id="dpad">
+            <span id="gameTime">00:00</span>
 
-        <button
-            type="button"
-            id="up"
-            class="moveButton">
-            ▲
-        </button>
+            <span class="score redScore"><b id="redTowers">1</b> 🏰</span>
 
-        <button
-            type="button"
-            id="left"
-            class="moveButton">
-            ◀
-        </button>
+        </div>
 
-        <div id="dpadCenter"></div>
+        <div id="enemyPanel">
 
-        <button
-            type="button"
-            id="right"
-            class="moveButton">
-            ▶
-        </button>
+            <div class="enemyName">Dark Knight</div>
 
-        <button
-            type="button"
-            id="down"
-            class="moveButton">
-            ▼
-        </button>
+            <div class="hpTrack small">
+
+                <div id="enemyHealthBar" class="hpFill foe"></div>
+
+                <div class="hpText">
+                    <span id="enemyHealth">500</span>
+                </div>
+
+            </div>
+
+        </div>
 
     </div>
 
-    <button
-        type="button"
-        id="attack">
-        ⚔
-    </button>
-
-</div>
     <!--======================================================
-        GAME INFO
+        HUD KANAN ATAS: minimap + pause
+    =======================================================-->
+
+    <div id="hudTopRight">
+
+        <canvas id="minimap" width="132" height="132"></canvas>
+
+        <button type="button" id="pauseButton" aria-label="Pause">⏸</button>
+
+    </div>
+
+    <!--======================================================
+        PAUSE
+    =======================================================-->
+
+    <div id="pauseText">⏸ PAUSE</div>
+
+    <!--======================================================
+        KONTROL: joystick + tombol serang dan skill
+    =======================================================-->
+
+    <div id="mobileControls">
+
+        <div id="joystick">
+
+            <div id="joyKnob"></div>
+
+        </div>
+
+        <div id="actionButtons">
+
+            <button type="button" id="skillSlash" class="skillBtn" aria-label="Tebasan Putar">
+                <span class="icon">🌀</span>
+                <span class="keyHint">Q</span>
+                <span class="cdText"></span>
+            </button>
+
+            <button type="button" id="skillHeal" class="skillBtn" aria-label="Penyembuh">
+                <span class="icon">💚</span>
+                <span class="keyHint">E</span>
+                <span class="cdText"></span>
+            </button>
+
+            <button type="button" id="attack" aria-label="Serang">
+                ⚔
+            </button>
+
+        </div>
+
+    </div>
+
+    <!--======================================================
+        PETUNJUK (hanya tampil di PC)
     =======================================================-->
 
     <div class="hint">
 
-        <b>PC</b><br>
-
-        W A S D = Bergerak<br>
-        SPACE / Klik Kiri = Attack<br>
+        WASD = Bergerak &nbsp;|&nbsp;
+        Spasi / Klik = Serang &nbsp;|&nbsp;
+        Q = Tebasan Putar &nbsp;|&nbsp;
+        E = Sembuhkan &nbsp;|&nbsp;
         ESC = Pause
-
-        <br><br>
-
-        <b>Mobile</b><br>
-
-        Gunakan tombol di layar.
 
     </div>
 
@@ -121,13 +173,13 @@
     =======================================================-->
 
     <script src="./arena.js"></script>
-<script src="./player.js"></script>
-<script src="./enemy.js"></script>
-<script src="./minion.js"></script>
-<script src="./tower.js"></script>
-<script src="./base.js"></script>
-<script src="./ui.js"></script>
-<script src="./main.js"></script>>
+    <script src="./player.js"></script>
+    <script src="./enemy.js"></script>
+    <script src="./minion.js"></script>
+    <script src="./tower.js"></script>
+    <script src="./base.js"></script>
+    <script src="./ui.js"></script>
+    <script src="./main.js"></script>
 
 </body>
 

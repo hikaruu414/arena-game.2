@@ -28,105 +28,149 @@ function createPlayer(){
 
     const hikaru = new THREE.Group();
 
-    // BODY
-    const armor = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.55,0.7,1.3,12),
-        new THREE.MeshStandardMaterial({
-            color:0x1565c0,
-            metalness:0.7,
-            roughness:0.3
-        })
-    );
-    armor.position.y = 1.2;
-    hikaru.add(armor);
+    const skin = 0xffd7b5;
+    const hairColor = 0x1c2250;
 
-    // HEAD
-    const face = new THREE.Mesh(
-        new THREE.SphereGeometry(0.38,20,20),
-        new THREE.MeshStandardMaterial({
-            color:0xffc49b
-        })
-    );
-    face.position.y = 2.2;
-    hikaru.add(face);
+    // BODY (armor biru)
+    hikaru.add(makePart(
+        new THREE.CylinderGeometry(0.42,0.55,0.95,16),
+        0x2f6fe4, 0, 0.98, 0
+    ));
+
+    // BELT
+    hikaru.add(makePart(
+        new THREE.CylinderGeometry(0.56,0.56,0.14,16),
+        0xffc83d, 0, 0.62, 0, { outline:1.1 }
+    ));
+
+    // EMBLEM DADA
+    hikaru.add(makePart(
+        new THREE.OctahedronGeometry(0.13),
+        0xffc83d, 0, 1.12, -0.46, { outline:1.2 }
+    ));
+
+    // CAPE
+    hikaru.add(makePart(
+        new THREE.BoxGeometry(0.95,1.1,0.07),
+        0xe84545, 0, 1.08, 0.45
+    ));
+
+    // HEAD (besar, gaya chibi)
+    hikaru.add(makePart(
+        new THREE.SphereGeometry(0.62,24,20),
+        skin, 0, 2.0, 0
+    ));
 
     // HAIR
-    const hair = new THREE.Mesh(
-        new THREE.SphereGeometry(0.4,16,16),
-        new THREE.MeshStandardMaterial({
-            color:0x111111
-        })
+    const hair = makePart(
+        new THREE.SphereGeometry(0.66,20,16),
+        hairColor, 0, 2.12, 0.08
     );
-    hair.scale.y = 0.5;
-    hair.position.y = 2.5;
+    hair.scale.set(1,0.8,1);
     hikaru.add(hair);
 
-    // SHOULDER
-    const shoulder = new THREE.Mesh(
-        new THREE.BoxGeometry(1.4,0.25,0.5),
-        new THREE.MeshStandardMaterial({
-            color:0x90caf9,
-            metalness:1
-        })
+    // HAIR SPIKES
+    [[-0.32,2.72,-0.1,0.45],[0,2.84,-0.15,0],[0.32,2.72,-0.1,-0.45]]
+    .forEach(p=>{
+
+        const spike = makePart(
+            new THREE.ConeGeometry(0.2,0.55,8),
+            hairColor, p[0], p[1], p[2]
+        );
+        spike.rotation.z = p[3];
+        hikaru.add(spike);
+
+    });
+
+    // EYES (besar dan berkilau)
+    for(let i=-1;i<=1;i+=2){
+
+        hikaru.add(makePart(
+            new THREE.SphereGeometry(0.15,12,10),
+            0xffffff, i*0.24, 2.0, -0.5,
+            { outline:1.12, shadow:false }
+        ));
+
+        hikaru.add(makePart(
+            new THREE.SphereGeometry(0.09,10,8),
+            0x1e90ff, i*0.24, 1.99, -0.6,
+            { outline:false, shadow:false,
+              material:{ emissive:0x0a4aff, emissiveIntensity:0.6 } }
+        ));
+
+        hikaru.add(makePart(
+            new THREE.SphereGeometry(0.03,6,6),
+            0xffffff, i*0.24+0.03, 2.03, -0.68,
+            { outline:false, shadow:false }
+        ));
+
+        // PIPI
+        hikaru.add(makePart(
+            new THREE.SphereGeometry(0.08,8,6),
+            0xff9aa8, i*0.38, 1.82, -0.45,
+            { outline:false, shadow:false }
+        ));
+
+    }
+
+    // MULUT
+    const mouth = makePart(
+        new THREE.SphereGeometry(0.04,6,6),
+        0x6b2f2f, 0, 1.78, -0.6,
+        { outline:false, shadow:false }
     );
-    shoulder.position.y = 1.7;
-    hikaru.add(shoulder);
+    mouth.scale.set(2.2,0.8,1);
+    hikaru.add(mouth);
+
+    // SHOULDER
+    for(let i=-1;i<=1;i+=2){
+
+        hikaru.add(makePart(
+            new THREE.SphereGeometry(0.22,12,10),
+            0xcfe6ff, i*0.62, 1.4, 0
+        ));
+
+    }
 
     // SWORD
-    const sword = new THREE.Mesh(
-        new THREE.BoxGeometry(0.12,1.5,0.15),
-        new THREE.MeshStandardMaterial({
-            color:0xffffff,
-            metalness:1
-        })
+    const sword = makePart(
+        new THREE.BoxGeometry(0.12,1.2,0.14),
+        0xf2f6ff, 0.85, 1.2, -0.15,
+        { outline:1.35, material:{ emissive:0x335577, emissiveIntensity:0.4 } }
     );
 
     sword.name = "Sword";
-    sword.position.set(0.8,1.3,0);
     sword.rotation.z = -0.5;
+
+    sword.add(makePart(
+        new THREE.BoxGeometry(0.42,0.1,0.18),
+        0xffc83d, 0, -0.52, 0, { outline:1.2 }
+    ));
+
     hikaru.add(sword);
 
-    // LEGS
+    // LEGS (boots)
     for(let i=-1;i<=1;i+=2){
 
-        const leg = new THREE.Mesh(
-            new THREE.BoxGeometry(0.25,0.7,0.3),
-            new THREE.MeshStandardMaterial({
-                color:0x222222
-            })
-        );
+        hikaru.add(makePart(
+            new THREE.BoxGeometry(0.28,0.5,0.32),
+            0x3b2f4a, i*0.2, 0.25, 0
+        ));
 
-        leg.position.set(i*0.2,0.35,0);
-
-        hikaru.add(leg);
     }
 
-    // EYES
-    const eyeMaterial = new THREE.MeshStandardMaterial({
-        color:0x00ffff,
-        emissive:0x0066ff
-    });
-
-    const eye1 = new THREE.Mesh(
-        new THREE.SphereGeometry(0.04,8,8),
-        eyeMaterial
+    // BAYANGAN BULAT DI TANAH
+    const blob = new THREE.Mesh(
+        new THREE.CircleGeometry(0.8,20),
+        new THREE.MeshBasicMaterial({
+            color:0x000000, transparent:true, opacity:0.25
+        })
     );
+    blob.rotation.x = -Math.PI/2;
+    blob.position.y = 0.05;
+    hikaru.add(blob);
 
-    const eye2 = eye1.clone();
-
-    eye1.position.set(-0.12,2.22,-0.34);
-    eye2.position.set(0.12,2.22,-0.34);
-
-    hikaru.add(eye1);
-    hikaru.add(eye2);
-
-    // SHADOW
-    hikaru.traverse(obj=>{
-        if(obj.isMesh){
-            obj.castShadow = true;
-            obj.receiveShadow = true;
-        }
-    });
+    hikaru.userData.barHeight = 3.4;
 
     hikaru.name = "Hikaru";
     hikaru.position.set(0,0,5);
@@ -150,6 +194,14 @@ window.addEventListener("keydown",e=>{
         playerAttack();
     }
 
+    if(e.code==="KeyQ"){
+        castSlash();
+    }
+
+    if(e.code==="KeyE"){
+        castHeal();
+    }
+
 });
 
 window.addEventListener("keyup",e=>{
@@ -159,75 +211,117 @@ window.addEventListener("keyup",e=>{
 });
 
 /*==========================================================
-    MOBILE INPUT
+    MOBILE INPUT (joystick analog)
+    x / z bernilai -1 sampai 1
 ==========================================================*/
 
 const mobileInput = {
-    up: false,
-    down: false,
-    left: false,
-    right: false
+    x: 0,
+    z: 0
 };
 
 function resetMobileInput() {
 
-    mobileInput.up = false;
-    mobileInput.down = false;
-    mobileInput.left = false;
-    mobileInput.right = false;
+    mobileInput.x = 0;
+    mobileInput.z = 0;
 
-    document
-        .querySelectorAll(".moveButton")
-        .forEach(button => {
-            button.classList.remove("pressed");
-        });
+    const knob = document.getElementById("joyKnob");
+
+    if (knob) {
+        knob.style.transform = "translate(-50%, -50%)";
+    }
 
 }
 
-function buttonControl(id, key) {
+(function setupJoystick() {
 
-    const button = document.getElementById(id);
+    const stick = document.getElementById("joystick");
+    const knob = document.getElementById("joyKnob");
 
-    if (!button) return;
+    if (!stick || !knob) return;
 
-    button.addEventListener("pointerdown", event => {
+    let activeId = null;
+
+    function move(event) {
+
+        const rect = stick.getBoundingClientRect();
+
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        let dx = event.clientX - cx;
+        let dy = event.clientY - cy;
+
+        const max = rect.width * 0.36;
+        const len = Math.hypot(dx, dy);
+
+        if (len > max) {
+            dx = dx / len * max;
+            dy = dy / len * max;
+        }
+
+        knob.style.transform =
+            "translate(calc(-50% + " + dx + "px), calc(-50% + " + dy + "px))";
+
+        // Zona mati kecil di tengah
+        if (len / max < 0.15) {
+            mobileInput.x = 0;
+            mobileInput.z = 0;
+            return;
+        }
+
+        mobileInput.x = dx / max;
+        mobileInput.z = dy / max;
+
+    }
+
+    stick.addEventListener("pointerdown", event => {
 
         event.preventDefault();
 
-        mobileInput[key] = true;
+        activeId = event.pointerId;
 
-        button.classList.add("pressed");
-
-        if (button.setPointerCapture) {
-            button.setPointerCapture(event.pointerId);
+        if (stick.setPointerCapture) {
+            stick.setPointerCapture(event.pointerId);
         }
+
+        stick.classList.add("active");
+
+        move(event);
 
     });
 
-    const releaseButton = event => {
+    stick.addEventListener("pointermove", event => {
+
+        if (event.pointerId !== activeId) return;
 
         event.preventDefault();
 
-        mobileInput[key] = false;
+        move(event);
 
-        button.classList.remove("pressed");
+    });
+
+    const release = event => {
+
+        if (event.pointerId !== activeId) return;
+
+        activeId = null;
+
+        stick.classList.remove("active");
+
+        resetMobileInput();
 
     };
 
-    button.addEventListener("pointerup", releaseButton);
-    button.addEventListener("pointercancel", releaseButton);
-    button.addEventListener("lostpointercapture", releaseButton);
+    stick.addEventListener("pointerup", release);
+    stick.addEventListener("pointercancel", release);
+    stick.addEventListener("lostpointercapture", release);
 
-    button.addEventListener("contextmenu", event => {
+    stick.addEventListener("contextmenu", event => {
         event.preventDefault();
     });
 
-}
-
-buttonControl("up", "up");
-buttonControl("down", "down");
-buttonControl("left", "left");
-buttonControl("right", "right");
+})();
 
 window.addEventListener("blur", resetMobileInput);
 /*==========================================================
@@ -265,23 +359,10 @@ function updatePlayer(dt) {
         x += 1;
     }
 
-    /*================ MOBILE ================*/
+    /*================ MOBILE (joystick) ================*/
 
-    if (mobileInput.up) {
-        z -= 1;
-    }
-
-    if (mobileInput.down) {
-        z += 1;
-    }
-
-    if (mobileInput.left) {
-        x -= 1;
-    }
-
-    if (mobileInput.right) {
-        x += 1;
-    }
+    x += mobileInput.x;
+    z += mobileInput.z;
 
     /*================ MOVEMENT ================*/
 
@@ -299,17 +380,21 @@ function updatePlayer(dt) {
 
     if (length > 0) {
 
+        // Joystick setengah dorong = jalan pelan
+        const power = Math.min(length, 1);
+
         x /= length;
         z /= length;
 
         Player.mesh.position.x +=
-            x * Player.speed * dt;
+            x * Player.speed * power * dt;
 
         Player.mesh.position.z +=
-            z * Player.speed * dt;
+            z * Player.speed * power * dt;
 
+        // Depan karakter = arah -z, jadi tambah PI
         Player.mesh.rotation.y =
-            Math.atan2(x, z);
+            Math.atan2(x, z) + Math.PI;
 
         /* Animasi kaki */
 
@@ -354,6 +439,31 @@ function updatePlayer(dt) {
             14
         );
 
+    /*================ SKILL COOLDOWN ================*/
+
+    for (const key in Skills) {
+
+        if (Skills[key].timer > 0) {
+
+            Skills[key].timer = Math.max(
+                0,
+                Skills[key].timer - dt
+            );
+
+        }
+
+    }
+
+    // Putaran badan saat Tebasan Putar
+    if (Player.spinTime > 0) {
+
+        Player.mesh.rotation.y +=
+            (Math.PI * 2 / 0.35) * dt;
+
+        Player.spinTime -= dt;
+
+    }
+
     /*================ ATTACK COOLDOWN ================*/
 
     if (Player.attackTimer > 0) {
@@ -386,11 +496,14 @@ function updatePlayer(dt) {
 
 /*==========================================================
     PLAYER ATTACK
+    Menyerang semua musuh dalam jangkauan:
+    hero musuh, minion musuh, tower, dan base
+    (base hanya terkena kalau tower musuh sudah hancur).
 ==========================================================*/
 
 function playerAttack(){
 
-    if(!Player.mesh) return;
+    if(!Player.mesh || gameOver || typeof paused !== "undefined" && paused) return;
 
     if(Player.attackTimer > 0) return;
 
@@ -415,48 +528,160 @@ function playerAttack(){
 
     }
 
-    // Musuh belum ada
-    if(!Enemy || !Enemy.mesh || !Enemy.alive) return;
+    const pos = Player.mesh.position;
+    const range = Player.attackRange;
 
-    const distance = Player.mesh.position.distanceTo(
-        Enemy.mesh.position
-    );
+    // Hero musuh
+    if(Enemy.mesh && Enemy.alive){
 
-    function playerAttack(){
+        if(flatDistance(pos, Enemy.mesh.position) <= range){
 
-    if(Player.attackTimer > 0) return;
+            damageEntity(Enemy, Player.attackDamage);
 
-    Player.attackTimer = Player.attackCooldown;
+        }
 
-    // Letakkan animasi di sini
-
-    const sword = Player.mesh.getObjectByName("Sword");
-
-    if(sword){
-        sword.rotation.z = -1.5;
-
-        setTimeout(()=>{
-            if(Player.mesh){
-                sword.rotation.z = -0.5;
-            }
-        },120);
     }
 
-    // Baru cek musuh
-    if(!Enemy.mesh) return;
+    // Minion musuh
+    // (salin array: minion yang mati bisa dibersihkan saat loop)
+    for(const m of Minions.slice()){
 
-    const distance = Player.mesh.position.distanceTo(
-        Enemy.mesh.position
+        if(!m.alive || m.team !== "enemy") continue;
+
+        if(flatDistance(pos, m.mesh.position) <= range){
+
+            damageEntity(m, Player.attackDamage);
+
+        }
+
+    }
+
+    // Bangunan punya ukuran, jangkauannya sedikit lebih jauh
+    const buildingRange = range + 1.2;
+
+    const tower = Towers.find(
+        t => t.team === "enemy" && t.alive
     );
 
-    if(distance <= Player.attackRange){
-        damageEnemy(Player.attackDamage);
+    if(tower && flatDistance(pos, tower.mesh.position) <= buildingRange){
+
+        damageEntity(tower, Player.attackDamage);
+
     }
+
+    const base = Bases.find(
+        b => b.team === "enemy" && b.hp > 0
+    );
+
+    if(base && flatDistance(pos, base.mesh.position) <= buildingRange){
+
+        damageEntity(base, Player.attackDamage);
+
+    }
+
 }
 
-    if(distance <= Player.attackRange){
+/*==========================================================
+    SKILL
+    Skill 1 (Q): Tebasan Putar - damage area di sekitar Hikaru
+    Skill 2 (E): Penyembuh - memulihkan HP
+==========================================================*/
 
-        damageEnemy(Player.attackDamage);
+const Skills = {
+
+    slash: { cd: 6, timer: 0, damage: 80, radius: 4 },
+
+    heal: { cd: 15, timer: 0, amount: 120 }
+
+};
+
+function canCast(skill) {
+
+    if (!Player.mesh || gameOver) return false;
+
+    if (typeof paused !== "undefined" && paused) return false;
+
+    return skill.timer <= 0;
+
+}
+
+function castSlash() {
+
+    const skill = Skills.slash;
+
+    if (!canCast(skill)) return;
+
+    skill.timer = skill.cd;
+
+    Player.spinTime = 0.35;
+
+    const pos = Player.mesh.position;
+
+    spawnRingEffect(pos, 0xffc83d, skill.radius, 0.4);
+
+    // Hero musuh
+    if (Enemy.mesh && Enemy.alive &&
+        flatDistance(pos, Enemy.mesh.position) <= skill.radius) {
+
+        damageEntity(Enemy, skill.damage);
+
+    }
+
+    // Minion musuh
+    for (const m of Minions.slice()) {
+
+        if (!m.alive || m.team !== "enemy") continue;
+
+        if (flatDistance(pos, m.mesh.position) <= skill.radius) {
+
+            damageEntity(m, skill.damage);
+
+        }
+
+    }
+
+    // Bangunan (jangkauan lebih jauh karena ukurannya besar)
+    const tower = Towers.find(t => t.team === "enemy" && t.alive);
+
+    if (tower &&
+        flatDistance(pos, tower.mesh.position) <= skill.radius + 1.2) {
+
+        damageEntity(tower, skill.damage);
+
+    }
+
+    const base = Bases.find(b => b.team === "enemy" && b.hp > 0);
+
+    if (base &&
+        flatDistance(pos, base.mesh.position) <= skill.radius + 1.2) {
+
+        damageEntity(base, skill.damage);
+
+    }
+
+}
+
+function castHeal() {
+
+    const skill = Skills.heal;
+
+    if (!canCast(skill)) return;
+
+    if (Player.hp >= Player.maxHp) return;
+
+    skill.timer = skill.cd;
+
+    Player.hp = Math.min(Player.maxHp, Player.hp + skill.amount);
+
+    spawnRingEffect(Player.mesh.position, 0x4cd964, 2.2, 0.5);
+
+    if (typeof showDamageNumber === "function") {
+
+        showDamageNumber(
+            Player.mesh.position,
+            "+" + skill.amount,
+            "heal"
+        );
 
     }
 
@@ -466,22 +691,38 @@ function playerAttack(){
     ATTACK BUTTON
 ==========================================================*/
 
-const attackButton = document.getElementById("attack");
+function bindButton(id, action){
 
-if(attackButton){
+    const button = document.getElementById(id);
 
-    attackButton.addEventListener(
-        "pointerdown",
-        playerAttack
-    );
+    if(!button) return;
+
+    button.addEventListener("pointerdown", event => {
+
+        event.preventDefault();
+
+        action();
+
+    });
+
+    button.addEventListener("contextmenu", event => {
+        event.preventDefault();
+    });
 
 }
+
+bindButton("attack", playerAttack);
+bindButton("skillSlash", castSlash);
+bindButton("skillHeal", castHeal);
 
 /*==========================================================
     MOUSE ATTACK
 ==========================================================*/
 
 window.addEventListener("mousedown",e=>{
+
+    // Klik pada tombol layar bukan serangan mouse
+    if(e.target.closest && e.target.closest("#mobileControls, #hudTopRight")) return;
 
     if(e.button===0){
 

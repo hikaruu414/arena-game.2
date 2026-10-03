@@ -1,6 +1,6 @@
 /*==========================================================
     Arena Battle 3D
-    style.css FINAL
+    style.css  (HUD gaya MOBA mobile: biru + emas, sudut bulat)
 ==========================================================*/
 
 
@@ -8,13 +8,24 @@
     RESET
 ==========================================================*/
 
-
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
 }
 
+:root{
+    --gold:#f7d774;
+    --gold-dark:#b8862b;
+    --navy:#12295a;
+    --navy-dark:#0a1634;
+    --text-stroke:
+        -1px -1px 0 #0a1634,
+         1px -1px 0 #0a1634,
+        -1px  1px 0 #0a1634,
+         1px  1px 0 #0a1634,
+         0 2px 0 #0a1634;
+}
 
 html,
 body{
@@ -24,25 +35,34 @@ body{
 
     overflow:hidden;
 
-    background:#000;
+    background:#9be0ff;
 
     font-family:
+    "Trebuchet MS",
+    "Segoe UI",
     Arial,
     Helvetica,
     sans-serif;
 
+    font-weight:800;
+
     touch-action:none;
 
-}
+    -webkit-user-select:none;
+    user-select:none;
 
+}
 
 
 /*==========================================================
     GAME CANVAS
 ==========================================================*/
 
+canvas#minimap{
+    position:static;
+}
 
-canvas{
+body > canvas:not(#minimap){
 
     position:absolute;
 
@@ -54,338 +74,753 @@ canvas{
 
     display:block;
 
-    cursor:crosshair;
-
 }
-
 
 
 /*==========================================================
-    HUD
+    PANEL UMUM (kaca biru dengan bingkai emas)
 ==========================================================*/
 
-
-#gameUI{
-
-    position:absolute;
-
-    top:20px;
-
-    left:50%;
-
-    transform:translateX(-50%);
-
-    width:90%;
-
-    display:flex;
-
-    justify-content:space-between;
-
-    z-index:10;
-
-    color:white;
-
-    font-size:18px;
-
-    font-weight:bold;
-
-}
-
-
-
-#hp,
-#enemyHP{
+.hpPanel,
+#scoreboard,
+#enemyPanel,
+#minimap,
+#pauseButton{
 
     background:
-    rgba(0,0,0,0.65);
+    linear-gradient(
+        180deg,
+        rgba(30,64,130,.92),
+        rgba(10,22,52,.92)
+    );
 
-    padding:10px 18px;
+    border:3px solid var(--gold);
 
-    border-radius:12px;
-
-    border:
-    2px solid rgba(255,255,255,0.4);
+    box-shadow:
+        0 3px 0 var(--gold-dark),
+        0 6px 14px rgba(0,0,0,.35),
+        inset 0 0 0 1px rgba(255,255,255,.25);
 
 }
 
 
-
 /*==========================================================
-    PLAYER HEALTH BAR
+    HUD KIRI ATAS
 ==========================================================*/
 
+#hudTopLeft{
 
-#playerBar{
+    position:fixed;
 
-    position:absolute;
+    top:10px;
+    left:10px;
 
-    top:65px;
-
-    left:50%;
-
-    transform:translateX(-50%);
-
-    width:220px;
-
-    height:22px;
-
-    background:#222;
-
-    border-radius:20px;
-
-    overflow:hidden;
-
-    border:2px solid white;
+    display:flex;
+    align-items:center;
 
     z-index:20;
 
 }
 
+.avatar{
 
+    position:relative;
 
-#playerHealthBar{
+    width:68px;
+    height:68px;
 
-    width:100%;
+    border-radius:50%;
 
-    height:100%;
+    border:4px solid var(--gold);
 
     background:
-
-    linear-gradient(
-        90deg,
-        limegreen,
-        yellowgreen
+    radial-gradient(
+        circle at 35% 30%,
+        #8fd0ff,
+        #2b6fd6 70%
     );
 
+    box-shadow:
+        0 3px 0 var(--gold-dark),
+        0 6px 12px rgba(0,0,0,.4);
 
-    transition:
-
-    width .3s ease;
+    z-index:2;
 
 }
 
+.avatar svg{
 
+    width:100%;
+    height:100%;
 
-/*==========================================================
-    MOBILE CONTROL
-==========================================================*/
+    border-radius:50%;
 
-#mobileControls {
-    position: fixed;
-
-    left: 0;
-    right: 0;
-    bottom: 20px;
-
-    width: 100%;
-
-    padding: 12px 20px;
-
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-
-    z-index: 100;
-
-    pointer-events: none;
 }
 
+.avatar .level{
 
-/*==========================================================
-    D-PAD
-==========================================================*/
+    position:absolute;
 
-#dpad {
-    display: grid;
+    right:-4px;
+    bottom:-4px;
 
-    grid-template-columns: repeat(3, 58px);
-    grid-template-rows: repeat(3, 58px);
+    width:24px;
+    height:24px;
 
-    gap: 4px;
+    border-radius:50%;
 
-    pointer-events: auto;
+    background:linear-gradient(180deg,#ffe58a,#e0a229);
 
-    touch-action: none;
+    border:2px solid #7a5410;
+
+    color:#3b2400;
+
+    font-size:13px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
 }
 
+.hpPanel{
 
-#up {
-    grid-column: 2;
-    grid-row: 1;
+    margin-left:-14px;
+
+    padding:5px 12px 7px 22px;
+
+    border-radius:0 14px 14px 0;
+
+    min-width:170px;
+
 }
 
+.heroName{
 
-#left {
-    grid-column: 1;
-    grid-row: 2;
-}
+    color:#fff;
 
+    font-size:13px;
 
-#dpadCenter {
-    grid-column: 2;
-    grid-row: 2;
+    text-shadow:var(--text-stroke);
 
-    width: 58px;
-    height: 58px;
+    margin-bottom:3px;
 
-    border-radius: 50%;
-
-    background: rgba(0, 0, 0, 0.25);
-
-    border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-
-#right {
-    grid-column: 3;
-    grid-row: 2;
-}
-
-
-#down {
-    grid-column: 2;
-    grid-row: 3;
 }
 
 
 /*==========================================================
-    MOVE BUTTON
+    BAR HP
 ==========================================================*/
 
-.moveButton {
-    width: 58px;
-    height: 58px;
+.hpTrack{
 
-    border: 2px solid rgba(255, 255, 255, 0.45);
+    position:relative;
 
-    border-radius: 18px;
+    height:18px;
 
-    background: rgba(20, 40, 70, 0.8);
+    background:#08122b;
 
-    color: white;
+    border:2px solid #050b1c;
 
-    font-size: 24px;
+    border-radius:10px;
 
-    font-weight: bold;
+    overflow:hidden;
 
-    cursor: pointer;
-
-    user-select: none;
-
-    touch-action: none;
-
-    -webkit-user-select: none;
-
-    -webkit-tap-highlight-color: transparent;
-
-    transition:
-        transform 0.08s ease,
-        background 0.08s ease;
 }
 
+.hpTrack.small{
+    height:14px;
+}
 
-.moveButton:active,
-.moveButton.pressed {
-    transform: scale(0.88);
+.hpFill{
 
-    background: rgba(60, 140, 255, 0.9);
+    width:100%;
+    height:100%;
+
+    border-radius:8px;
+
+    transition:width .15s linear;
+
+    background:
+    linear-gradient(
+        180deg,
+        #9cf06a,
+        #3fc43f 55%,
+        #2a9a2a
+    );
+
+}
+
+.hpFill.foe{
+
+    background:
+    linear-gradient(
+        180deg,
+        #ff9a8a,
+        #ff4d4d 55%,
+        #c92a2a
+    );
+
+}
+
+.hpText{
+
+    position:absolute;
+    inset:0;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:#fff;
+
+    font-size:12px;
+
+    text-shadow:var(--text-stroke);
+
+}
+
+.hpTrack.small .hpText{
+    font-size:10px;
 }
 
 
 /*==========================================================
-    ATTACK BUTTON
+    HUD TENGAH ATAS
 ==========================================================*/
 
-#attack {
-    width: 88px;
-    height: 88px;
+#hudTopCenter{
 
-    margin-bottom: 30px;
+    position:fixed;
 
-    border: 2px solid rgba(255, 255, 255, 0.5);
+    top:10px;
+    left:50%;
 
-    border-radius: 50%;
+    transform:translateX(-50%);
 
-    background: rgba(210, 35, 35, 0.8);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
 
-    color: white;
+    gap:6px;
 
-    font-size: 38px;
+    z-index:20;
 
-    font-weight: bold;
+    pointer-events:none;
 
-    cursor: pointer;
-
-    pointer-events: auto;
-
-    touch-action: none;
-
-    user-select: none;
-
-    -webkit-user-select: none;
-
-    -webkit-tap-highlight-color: transparent;
-
-    transition:
-        transform 0.08s ease,
-        background 0.08s ease;
 }
 
+#scoreboard{
 
-#attack:active {
-    transform: scale(0.88);
+    display:flex;
+    align-items:center;
+    gap:12px;
 
-    background: rgba(255, 65, 65, 0.95);
+    padding:4px 16px;
+
+    border-radius:20px;
+
+    color:#fff;
+
+    font-size:15px;
+
+    text-shadow:var(--text-stroke);
+
+}
+
+#gameTime{
+
+    min-width:54px;
+
+    text-align:center;
+
+    color:var(--gold);
+
+    font-size:17px;
+
+}
+
+.blueScore b{ color:#7fc2ff; }
+.redScore b{ color:#ff8d8d; }
+
+#enemyPanel{
+
+    width:170px;
+
+    padding:3px 10px 5px;
+
+    border-radius:12px;
+
+}
+
+.enemyName{
+
+    color:#ffb3b3;
+
+    font-size:11px;
+
+    text-align:center;
+
+    text-shadow:var(--text-stroke);
+
+    margin-bottom:2px;
+
 }
 
 
 /*==========================================================
-    MOBILE LANDSCAPE
+    HUD KANAN ATAS
 ==========================================================*/
 
-@media (max-width: 799px) {
+#hudTopRight{
 
-    #mobileControls {
-        bottom: 10px;
-        padding: 8px 12px;
+    position:fixed;
+
+    top:10px;
+    right:10px;
+
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+
+    gap:8px;
+
+    z-index:20;
+
+}
+
+#minimap{
+
+    width:132px;
+    height:132px;
+
+    border-radius:14px;
+
+}
+
+#pauseButton{
+
+    width:42px;
+    height:42px;
+
+    border-radius:50%;
+
+    color:#fff;
+
+    font-size:18px;
+
+    cursor:pointer;
+
+    touch-action:none;
+
+    -webkit-tap-highlight-color:transparent;
+
+}
+
+#pauseButton:active{
+    transform:scale(.92);
+}
+
+
+/*==========================================================
+    KONTROL
+==========================================================*/
+
+#mobileControls{
+
+    position:fixed;
+
+    left:0;
+    right:0;
+    bottom:0;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+
+    padding:0 22px 22px;
+
+    z-index:100;
+
+    pointer-events:none;
+
+}
+
+
+/*==========================================================
+    JOYSTICK
+==========================================================*/
+
+#joystick{
+
+    position:relative;
+
+    width:140px;
+    height:140px;
+
+    border-radius:50%;
+
+    background:
+    radial-gradient(
+        circle,
+        rgba(255,255,255,.12) 0%,
+        rgba(18,41,90,.45) 70%
+    );
+
+    border:4px solid rgba(247,215,116,.85);
+
+    box-shadow:
+        0 0 0 4px rgba(10,22,52,.35),
+        inset 0 0 18px rgba(0,0,0,.35);
+
+    pointer-events:auto;
+
+    touch-action:none;
+
+}
+
+#joyKnob{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    width:58px;
+    height:58px;
+
+    border-radius:50%;
+
+    transform:translate(-50%,-50%);
+
+    background:
+    radial-gradient(
+        circle at 35% 30%,
+        #fff3c4,
+        #f2b93b 70%
+    );
+
+    border:3px solid #8a5d12;
+
+    box-shadow:0 4px 8px rgba(0,0,0,.45);
+
+    pointer-events:none;
+
+}
+
+#joystick.active{
+    border-color:#fff3c4;
+}
+
+
+/*==========================================================
+    TOMBOL SERANG + SKILL
+==========================================================*/
+
+#actionButtons{
+
+    position:relative;
+
+    width:230px;
+    height:190px;
+
+    pointer-events:none;
+
+}
+
+#attack,
+.skillBtn{
+
+    position:absolute;
+
+    border-radius:50%;
+
+    cursor:pointer;
+
+    pointer-events:auto;
+
+    touch-action:none;
+
+    -webkit-tap-highlight-color:transparent;
+
+    transition:transform .08s ease;
+
+}
+
+#attack{
+
+    right:0;
+    bottom:0;
+
+    width:96px;
+    height:96px;
+
+    font-size:44px;
+
+    color:#fff;
+
+    text-shadow:var(--text-stroke);
+
+    background:
+    radial-gradient(
+        circle at 35% 30%,
+        #ff8d6a,
+        #e0352b 70%
+    );
+
+    border:4px solid var(--gold);
+
+    box-shadow:
+        0 4px 0 var(--gold-dark),
+        0 8px 14px rgba(0,0,0,.4),
+        inset 0 -6px 10px rgba(0,0,0,.25);
+
+}
+
+.skillBtn{
+
+    width:62px;
+    height:62px;
+
+    font-size:28px;
+
+    background:
+    radial-gradient(
+        circle at 35% 30%,
+        #7fb8ff,
+        #2b62c8 70%
+    );
+
+    border:3px solid var(--gold);
+
+    box-shadow:
+        0 3px 0 var(--gold-dark),
+        0 6px 12px rgba(0,0,0,.4),
+        inset 0 -5px 8px rgba(0,0,0,.25);
+
+    overflow:hidden;
+
+}
+
+#skillSlash{
+
+    right:112px;
+    bottom:6px;
+
+}
+
+#skillHeal{
+
+    right:84px;
+    bottom:84px;
+
+}
+
+#attack:active,
+.skillBtn:active{
+    transform:scale(.9);
+}
+
+.skillBtn .icon{
+    position:relative;
+    z-index:1;
+}
+
+/* Tutup gelap yang berputar saat cooldown */
+.skillBtn::after{
+
+    content:"";
+
+    position:absolute;
+    inset:0;
+
+    border-radius:50%;
+
+    background:
+    conic-gradient(
+        rgba(0,0,0,.62) var(--cd, 0%),
+        transparent 0
+    );
+
+    pointer-events:none;
+
+}
+
+.skillBtn .cdText{
+
+    position:absolute;
+    inset:0;
+
+    z-index:2;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:#fff;
+
+    font-size:22px;
+
+    text-shadow:var(--text-stroke);
+
+}
+
+.skillBtn .keyHint{
+
+    position:absolute;
+
+    top:2px;
+    left:6px;
+
+    z-index:2;
+
+    color:#fff;
+
+    font-size:11px;
+
+    text-shadow:var(--text-stroke);
+
+}
+
+.skillBtn.cooling .icon{
+    opacity:.55;
+}
+
+
+/*==========================================================
+    HP BAR / ANGKA DAMAGE
+==========================================================*/
+
+.floatDmg{
+
+    position:fixed;
+
+    z-index:30;
+
+    pointer-events:none;
+
+    color:#fff;
+
+    font-size:24px;
+
+    font-weight:900;
+
+    text-shadow:var(--text-stroke);
+
+    transform:translate(-50%,-50%);
+
+    animation:floatUp .8s ease-out forwards;
+
+}
+
+.floatDmg.small{
+    font-size:16px;
+}
+
+.floatDmg.hurt{
+    color:#ff6a6a;
+}
+
+.floatDmg.heal{
+    color:#7dff9a;
+}
+
+@keyframes floatUp{
+
+    0%{
+        opacity:0;
+        transform:translate(-50%,-50%) scale(.5);
     }
 
-    #dpad {
-        grid-template-columns: repeat(3, 50px);
-        grid-template-rows: repeat(3, 50px);
-        gap: 3px;
+    20%{
+        opacity:1;
+        transform:translate(-50%,-80%) scale(1.2);
     }
 
-    .moveButton {
-        width: 50px;
-        height: 50px;
-        font-size: 20px;
-        border-radius: 15px;
-    }
-
-    #dpadCenter {
-        width: 50px;
-        height: 50px;
-    }
-
-    #attack {
-        width: 72px;
-        height: 72px;
-        margin-bottom: 20px;
-        font-size: 30px;
+    100%{
+        opacity:0;
+        transform:translate(-50%,-190%) scale(1);
     }
 
 }
 
 
 /*==========================================================
-    INFORMATION TEXT
+    BANNER PESAN
 ==========================================================*/
 
+.bannerMsg{
+
+    position:fixed;
+
+    top:24%;
+    left:50%;
+
+    z-index:40;
+
+    padding:8px 26px;
+
+    border-radius:14px;
+
+    color:var(--gold);
+
+    font-size:24px;
+
+    white-space:nowrap;
+
+    text-shadow:var(--text-stroke);
+
+    background:
+    linear-gradient(
+        90deg,
+        transparent,
+        rgba(10,22,52,.85) 20%,
+        rgba(10,22,52,.85) 80%,
+        transparent
+    );
+
+    pointer-events:none;
+
+    transform:translateX(-50%);
+
+    animation:bannerIn 1.9s ease-out forwards;
+
+}
+
+@keyframes bannerIn{
+
+    0%{
+        opacity:0;
+        transform:translateX(-50%) scale(.6);
+    }
+
+    12%{
+        opacity:1;
+        transform:translateX(-50%) scale(1.1);
+    }
+
+    20%{
+        transform:translateX(-50%) scale(1);
+    }
+
+    85%{
+        opacity:1;
+    }
+
+    100%{
+        opacity:0;
+    }
+
+}
+
+
+/*==========================================================
+    PETUNJUK (PC)
+==========================================================*/
 
 .hint{
 
-    position:absolute;
+    position:fixed;
 
     bottom:10px;
 
@@ -395,212 +830,246 @@ canvas{
 
     z-index:15;
 
-    color:white;
+    color:#fff;
 
-    font-size:13px;
+    font-size:12px;
 
     text-align:center;
 
-    background:
+    white-space:nowrap;
 
-    rgba(0,0,0,.45);
+    text-shadow:var(--text-stroke);
 
-    padding:8px 12px;
+    background:rgba(10,22,52,.45);
 
-    border-radius:10px;
+    padding:5px 14px;
+
+    border-radius:12px;
+
+    pointer-events:none;
 
 }
 
+/* Layar sentuh / layar sempit: sembunyikan petunjuk keyboard */
+@media (hover:none), (max-width:900px){
+
+    .hint{
+        display:none;
+    }
+
+    .skillBtn .keyHint{
+        display:none;
+    }
+
+}
 
 
 /*==========================================================
     PAUSE
 ==========================================================*/
 
-
 #pauseText{
 
-    position:absolute;
+    position:fixed;
 
     top:50%;
-
     left:50%;
 
-
-    transform:
-
-    translate(-50%,-50%);
-
+    transform:translate(-50%,-50%);
 
     display:none;
 
+    padding:22px 48px;
 
-    color:white;
+    border-radius:22px;
 
-    font-size:45px;
+    color:#fff;
 
-    font-weight:bold;
+    font-size:40px;
 
+    text-shadow:var(--text-stroke);
 
-    z-index:100;
+    background:
+    linear-gradient(
+        180deg,
+        rgba(30,64,130,.95),
+        rgba(10,22,52,.95)
+    );
 
+    border:4px solid var(--gold);
 
-    text-shadow:
+    box-shadow:
+        0 5px 0 var(--gold-dark),
+        0 0 0 9999px rgba(0,0,0,.4);
 
-    0 0 15px white;
+    z-index:150;
 
 }
-
 
 
 /*==========================================================
     RESULT SCREEN
 ==========================================================*/
 
-
 #resultScreen{
 
-    position:absolute;
+    position:fixed;
 
     top:50%;
-
     left:50%;
 
+    transform:translate(-50%,-50%);
 
-    transform:
-
-    translate(-50%,-50%);
-
-
-    width:80%;
-
+    width:84%;
     max-width:420px;
 
-
-    padding:35px;
-
-
-    background:
-
-    rgba(0,0,0,.85);
-
-
-    border-radius:25px;
-
+    padding:34px 24px;
 
     display:none;
 
-
     text-align:center;
 
+    border-radius:26px;
 
-    color:white;
+    background:
+    linear-gradient(
+        180deg,
+        rgba(30,64,130,.97),
+        rgba(10,22,52,.97)
+    );
 
+    border:5px solid var(--gold);
+
+    box-shadow:
+        0 6px 0 var(--gold-dark),
+        0 0 0 9999px rgba(0,0,0,.55);
 
     z-index:200;
 
-
 }
-
-
 
 #resultText{
 
-    font-size:45px;
+    font-size:40px;
 
-    margin-bottom:25px;
+    margin-bottom:24px;
+
+    text-shadow:var(--text-stroke);
 
 }
 
-
+#resultText.win{ color:#7ff3ff; }
+#resultText.lose{ color:#ff7a7a; }
 
 #resultScreen button{
 
-    padding:
+    padding:14px 38px;
 
-    15px 35px;
+    border:3px solid var(--gold);
 
+    border-radius:30px;
 
-    border:none;
+    background:
+    linear-gradient(
+        180deg,
+        #ffd45a,
+        #e3961f
+    );
 
+    color:#4a2a00;
 
-    border-radius:15px;
-
-
-    background:#2980ff;
-
-
-    color:white;
-
+    font-family:inherit;
 
     font-size:20px;
 
+    font-weight:900;
 
-    font-weight:bold;
+    cursor:pointer;
 
-
-}
-
-
-
-/*==========================================================
-    DAMAGE TEXT
-==========================================================*/
-
-
-.damageText{
-
-    position:absolute;
-
-    color:#ffff00;
-
-    font-size:22px;
-
-    font-weight:bold;
-
-    pointer-events:none;
-
-    z-index:300;
+    box-shadow:0 4px 0 var(--gold-dark);
 
 }
 
+#resultScreen button:active{
+    transform:translateY(2px);
+    box-shadow:0 2px 0 var(--gold-dark);
+}
 
 
 /*==========================================================
-    DESKTOP
+    LAYAR KECIL (HP)
 ==========================================================*/
 
+@media (max-width:700px){
 
-@media(min-width:800px){
+    #hudTopLeft{
+        top:6px;
+        left:6px;
+    }
 
+    .avatar{
+        width:54px;
+        height:54px;
+    }
+
+    .hpPanel{
+        min-width:128px;
+        padding:4px 8px 5px 18px;
+    }
+
+    #hudTopRight{
+        top:6px;
+        right:6px;
+    }
+
+    #minimap{
+        width:100px;
+        height:100px;
+    }
+
+    #enemyPanel{
+        width:130px;
+    }
+
+    #joystick{
+        width:116px;
+        height:116px;
+    }
+
+    #joyKnob{
+        width:48px;
+        height:48px;
+    }
 
     #mobileControls{
-
-        width:420px;
-
-        left:50%;
-
-        transform:
-
-        translateX(-50%);
-
+        padding:0 12px 12px;
     }
 
-
-}
-
-
-
-@media(min-width:900px){
-
-
-    #mobileControls button:hover{
-
-        opacity:1;
-
-        transform:scale(1.1);
-
+    #actionButtons{
+        width:190px;
+        height:160px;
     }
 
+    #attack{
+        width:80px;
+        height:80px;
+        font-size:36px;
+    }
+
+    .skillBtn{
+        width:52px;
+        height:52px;
+        font-size:23px;
+    }
+
+    #skillSlash{
+        right:92px;
+        bottom:4px;
+    }
+
+    #skillHeal{
+        right:70px;
+        bottom:70px;
+    }
 
 }

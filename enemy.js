@@ -33,6 +33,9 @@ const Enemy = {
 
 };
 
+// Waktu hero musuh hidup lagi setelah dikalahkan (detik)
+const ENEMY_RESPAWN_TIME = 8;
+
 /*==========================================================
     CREATE ENEMY
 ==========================================================*/
@@ -43,124 +46,124 @@ function createEnemy() {
 
     const enemy = new THREE.Group();
 
+    const skin = 0xe8b894;
+
     /*================ BODY ================*/
 
-    const armor = new THREE.Mesh(
+    enemy.add(makePart(
+        new THREE.CylinderGeometry(0.45, 0.58, 0.95, 16),
+        0x7a1424, 0, 0.98, 0
+    ));
 
-        new THREE.CylinderGeometry(
-            0.55,
-            0.7,
-            1.3,
-            12
-        ),
+    enemy.add(makePart(
+        new THREE.CylinderGeometry(0.59, 0.59, 0.14, 16),
+        0x3a3a48, 0, 0.62, 0, { outline: 1.1 }
+    ));
 
-        new THREE.MeshStandardMaterial({
+    /*================ CAPE ================*/
 
-            color: 0x880000,
-            metalness: 0.7,
-            roughness: 0.3
-
-        })
-
-    );
-
-    armor.position.y = 1.2;
-    enemy.add(armor);
+    enemy.add(makePart(
+        new THREE.BoxGeometry(1.0, 1.1, 0.07),
+        0x23182e, 0, 1.08, 0.46
+    ));
 
     /*================ HEAD ================*/
 
-    const head = new THREE.Mesh(
+    enemy.add(makePart(
+        new THREE.SphereGeometry(0.62, 24, 20),
+        skin, 0, 2.0, 0
+    ));
 
+    /*================ HELMET (setengah bola) ================*/
+
+    enemy.add(makePart(
         new THREE.SphereGeometry(
-            0.38,
-            20,
-            20
+            0.7, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.55
         ),
+        0x2b2d3a, 0, 2.07, 0.02
+    ));
 
-        new THREE.MeshStandardMaterial({
+    /*================ HORNS ================*/
 
-            color: 0xffc49b
+    for (let i = -1; i <= 1; i += 2) {
 
-        })
+        const horn = makePart(
+            new THREE.ConeGeometry(0.15, 0.7, 8),
+            0xf0e6d0, i * 0.52, 2.7, 0
+        );
 
-    );
+        horn.rotation.z = -i * 0.7;
 
-    head.position.y = 2.2;
-    enemy.add(head);
+        enemy.add(horn);
 
-    /*================ HELMET ================*/
+    }
 
-    const helmet = new THREE.Mesh(
+    /*================ SHOULDER SPIKES ================*/
 
-        new THREE.SphereGeometry(
-            0.42,
-            16,
-            16
-        ),
+    for (let i = -1; i <= 1; i += 2) {
 
-        new THREE.MeshStandardMaterial({
+        const spike = makePart(
+            new THREE.ConeGeometry(0.22, 0.55, 8),
+            0x2a2a35, i * 0.68, 1.62, 0
+        );
 
-            color: 0x111111,
-            metalness: 0.8
+        spike.rotation.z = -i * 0.6;
 
-        })
+        enemy.add(spike);
 
-    );
+    }
 
-    helmet.scale.y = 0.5;
-    helmet.position.y = 2.45;
-    enemy.add(helmet);
+    /*================ EYES (marah) ================*/
 
-    /*================ SHOULDER ================*/
+    for (let i = -1; i <= 1; i += 2) {
 
-    const shoulder = new THREE.Mesh(
+        enemy.add(makePart(
+            new THREE.SphereGeometry(0.13, 12, 10),
+            0xffffff, i * 0.24, 1.96, -0.5,
+            { outline: 1.12, shadow: false }
+        ));
 
-        new THREE.BoxGeometry(
-            1.4,
-            0.25,
-            0.5
-        ),
+        enemy.add(makePart(
+            new THREE.SphereGeometry(0.08, 10, 8),
+            0xff2200, i * 0.24, 1.95, -0.59,
+            {
+                outline: false,
+                shadow: false,
+                material: { emissive: 0xff2200, emissiveIntensity: 0.8 }
+            }
+        ));
 
-        new THREE.MeshStandardMaterial({
+        // ALIS MIRING
+        const brow = makePart(
+            new THREE.BoxGeometry(0.3, 0.07, 0.07),
+            0x111111, i * 0.25, 2.14, -0.56,
+            { outline: false, shadow: false }
+        );
 
-            color: 0x550000,
-            metalness: 1
+        brow.rotation.z = i * 0.45;
 
-        })
+        enemy.add(brow);
 
-    );
-
-    shoulder.position.y = 1.7;
-    enemy.add(shoulder);
+    }
 
     /*================ SWORD ================*/
 
-    const sword = new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-            0.12,
-            1.5,
-            0.15
-        ),
-
-        new THREE.MeshStandardMaterial({
-
-            color: 0xffffff,
-            metalness: 1
-
-        })
-
+    const sword = makePart(
+        new THREE.BoxGeometry(0.16, 1.5, 0.18),
+        0xff6a6a, 0.9, 1.25, -0.15,
+        {
+            outline: 1.3,
+            material: { emissive: 0x880000, emissiveIntensity: 0.6 }
+        }
     );
 
     sword.name = "Sword";
-
-    sword.position.set(
-        0.8,
-        1.2,
-        0
-    );
-
     sword.rotation.z = -0.5;
+
+    sword.add(makePart(
+        new THREE.BoxGeometry(0.5, 0.12, 0.22),
+        0x2a2a35, 0, -0.65, 0, { outline: 1.2 }
+    ));
 
     enemy.add(sword);
 
@@ -168,73 +171,29 @@ function createEnemy() {
 
     for (let i = -1; i <= 1; i += 2) {
 
-        const leg = new THREE.Mesh(
-
-            new THREE.BoxGeometry(
-                0.25,
-                0.7,
-                0.3
-            ),
-
-            new THREE.MeshStandardMaterial({
-
-                color: 0x222222
-
-            })
-
-        );
-
-        leg.position.set(
-            i * 0.2,
-            0.35,
-            0
-        );
-
-        enemy.add(leg);
+        enemy.add(makePart(
+            new THREE.BoxGeometry(0.3, 0.5, 0.34),
+            0x2a2030, i * 0.22, 0.25, 0
+        ));
 
     }
 
-    /*================ EYES ================*/
+    /*================ BAYANGAN ================*/
 
-    const eyeMaterial = new THREE.MeshStandardMaterial({
-
-        color: 0xff0000,
-        emissive: 0xaa0000
-
-    });
-
-    const eye1 = new THREE.Mesh(
-
-        new THREE.SphereGeometry(
-            0.04,
-            8,
-            8
-        ),
-
-        eyeMaterial
-
+    const blob = new THREE.Mesh(
+        new THREE.CircleGeometry(0.9, 20),
+        new THREE.MeshBasicMaterial({
+            color: 0x000000, transparent: true, opacity: 0.25
+        })
     );
 
-    const eye2 = eye1.clone();
+    blob.rotation.x = -Math.PI / 2;
+    blob.position.y = 0.05;
+    enemy.add(blob);
 
-    eye1.position.set(-0.12, 2.22, -0.34);
-    eye2.position.set(0.12, 2.22, -0.34);
+    enemy.scale.setScalar(1.15);
 
-    enemy.add(eye1);
-    enemy.add(eye2);
-
-    /*================ SHADOW ================*/
-
-    enemy.traverse(obj => {
-
-        if (obj.isMesh) {
-
-            obj.castShadow = true;
-            obj.receiveShadow = true;
-
-        }
-
-    });
+    enemy.userData.barHeight = 3.2;
 
     enemy.position.set(
         0,
@@ -285,19 +244,27 @@ function updateEnemy(dt) {
             Enemy.speed *
             dt;
 
+        // Depan karakter = arah -z, jadi tambah PI
         Enemy.mesh.rotation.y =
-            Math.atan2(dx, dz);
+            Math.atan2(dx, dz) + Math.PI;
 
         /*================ WALK ANIMATION ================*/
 
-        const t = performance.now() * 0.01;
+        const walk =
+            Math.sin(performance.now() * 0.012) * 0.45;
 
         Enemy.mesh.children.forEach(part => {
 
-            if (part.geometry instanceof THREE.BoxGeometry) {
+            if (
+                part.isMesh &&
+                part.geometry instanceof THREE.BoxGeometry &&
+                part.position.y < 1
+            ) {
 
                 part.rotation.x =
-                    Math.sin(t * 8) * 0.15;
+                    part.position.x < 0
+                        ? walk
+                        : -walk;
 
             }
 
@@ -339,19 +306,7 @@ function updateEnemy(dt) {
 
             /* Damage Player */
 
-            Player.hp -= Enemy.damage;
-
-            if (Player.hp < 0) {
-
-                Player.hp = 0;
-
-            }
-
-            if (typeof updateUI === "function") {
-
-                updateUI();
-
-            }
+            damageEntity(Player, Enemy.damage);
 
             if (Player.hp <= 0) {
 
@@ -380,7 +335,7 @@ function updateEnemy(dt) {
 
 function damageEnemy(amount) {
 
-    if (!Enemy.alive || !Enemy.mesh) return;
+    if (!Enemy.alive || !Enemy.mesh || gameOver) return;
 
     Enemy.hp -= amount;
 
@@ -388,16 +343,20 @@ function damageEnemy(amount) {
 
     Enemy.mesh.traverse(obj => {
 
-        if (!obj.isMesh) return;
+        if (!obj.isMesh || obj.userData.isOutline) return;
 
-        const oldColor = obj.material.color.clone();
+        // Warna asli disimpan sekali, supaya hit beruntun
+        // tidak membuat warna "asli" tersimpan sebagai putih.
+        if (!obj.userData.baseColor) {
+            obj.userData.baseColor = obj.material.color.clone();
+        }
 
         obj.material.color.set(0xffffff);
 
         setTimeout(() => {
 
-            if (obj.material) {
-                obj.material.color.copy(oldColor);
+            if (obj.material && obj.userData.baseColor) {
+                obj.material.color.copy(obj.userData.baseColor);
             }
 
         }, 100);
@@ -441,6 +400,15 @@ function damageEnemy(amount) {
             addMessage("Enemy Defeated");
         }
 
+        // Hidup lagi setelah beberapa detik
+        setTimeout(() => {
+
+            if (!gameOver) {
+                resetEnemy();
+            }
+
+        }, ENEMY_RESPAWN_TIME * 1000);
+
     }
 
 }
@@ -468,4 +436,4 @@ function resetEnemy() {
         updateUI();
     }
 
-}
+}
