@@ -135,6 +135,165 @@ function createBases() {
 
     createBase("player", -13, 0);
     createBase("enemy", 13, 0);
+
+    // Area penyembuh di samping base (jauh dari lane)
+    createHealPad("player", -12.5, 5.5);
+    createHealPad("enemy", 12.5, -5.5);
+}
+
+/*==========================================================
+    HEAL PAD (area penyembuh)
+    Hero yang berdiri di lingkaran hijau dekat base timnya
+    memulihkan HP tiap detik.
+==========================================================*/
+
+const HealPads = [];
+
+const HEAL_PAD_CONFIG = {
+    radius: 2.8,
+    healPerSecond: 60
+};
+
+function createHealPad(team, x, z) {
+
+    const group = new THREE.Group();
+
+    // Lantai bercahaya
+    const disc = new THREE.Mesh(
+        new THREE.CircleGeometry(HEAL_PAD_CONFIG.radius, 40),
+        new THREE.MeshBasicMaterial({
+            color: 0x7dff9a,
+            transparent: true,
+            opacity: 0.35,
+            depthWrite: false
+        })
+    );
+
+    disc.rotation.x = -Math.PI / 2;
+    disc.position.y = 0.05;
+    group.add(disc);
+
+    // Cincin tepi
+    const ring = new THREE.Mesh(
+        new THREE.RingGeometry(HEAL_PAD_CONFIG.radius - 0.22, HEAL_PAD_CONFIG.radius, 40),
+        new THREE.MeshBasicMaterial({
+            color: 0x4cd964,
+            transparent: true,
+            opacity: 0.95,
+            side: THREE.DoubleSide
+        })
+    );
+
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.06;
+    group.add(ring);
+
+    // Alas kecil di tengah
+    group.add(makePart(
+        new THREE.CylinderGeometry(0.5, 0.7, 0.5, 12),
+        0xb7b9cc, 0, 0.25, 0
+    ));
+
+    // Tanda plus hijau yang melayang dan berputar
+    const plus = new THREE.Group();
+
+    plus.position.y = 1.5;
+
+    const glow = { material: { emissive: 0x2fbf55, emissiveIntensity: 0.8 } };
+
+    plus.add(makePart(
+        new THREE.BoxGeometry(0.9, 0.28, 0.28),
+        0x7dff9a, 0, 0, 0, glow
+    ));
+
+    plus.add(makePart(
+        new THREE.BoxGeometry(0.28, 0.9, 0.28),
+        0x7dff9a, 0, 0, 0, glow
+    ));
+
+    group.add(plus);
+
+    registerAnimated(plus, "spin", 1.4);
+    registerAnimated(plus, "bob", 2, 0.12);
+
+    group.position.set(x, 0, z);
+
+    scene.add(group);
+
+    HealPads.push({
+        team: team,
+        mesh: group,
+        disc: disc,
+        radius: HEAL_PAD_CONFIG.radius,
+        timer: 0,
+        accumulated: 0
+    });
+
+}
+
+// Pulihkan satu hero kalau ada di dalam pad timnya
+function healHeroOnPad(hero, isAlive, team, dt) {
+
+    hero.healing = false;
+
+    const pad = HealPads.find(p => p.team === team);
+
+    if (!pad || !hero.mesh || !isAlive) return;
+
+    if (hero.hp >= hero.maxHp) return;
+
+    if (flatDistance(hero.mesh.position, pad.mesh.position) > pad.radius) return;
+
+    hero.healing = true;
+
+    const amount = Math.min(
+        hero.maxHp - hero.hp,
+        HEAL_PAD_CONFIG.healPerSecond * dt
+    );
+
+    hero.hp += amount;
+
+    pad.accumulated += amount;
+    pad.timer += dt;
+
+    // Tiap setengah detik: angka "+HP" dan cincin kecil
+    if (pad.timer >= 0.5) {
+
+        if (typeof showDamageNumber === "function") {
+
+            showDamageNumber(
+                hero.mesh.position,
+                "+" + Math.round(pad.accumulated),
+                "heal"
+            );
+
+        }
+
+        spawnRingEffect(hero.mesh.position, 0x7dff9a, 1.6, 0.5);
+
+        pad.timer = 0;
+        pad.accumulated = 0;
+
+    }
+
+}
+
+function updateHealPads(dt) {
+
+    if (gameOver) return;
+
+    // Lantai berdenyut pelan
+    for (const pad of HealPads) {
+
+        pad.disc.material.opacity =
+            0.3 + Math.sin(sceneTime * 3) * 0.08;
+
+    }
+
+    healHeroOnPad(Player, Player.hp > 0, "player", dt);
+
+    healHeroOnPad(Enemy, Enemy.alive, "enemy", dt);
+
 }
 
 /*==========================================================

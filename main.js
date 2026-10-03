@@ -130,6 +130,10 @@ function gameLoop(time) {
         updateTowers(dt);
     }
 
+    if (typeof updateHealPads === "function") {
+        updateHealPads(dt);
+    }
+
     gameTime += dt;
 
     if (typeof updateScene === "function") {

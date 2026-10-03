@@ -286,6 +286,61 @@ body > canvas:not(#minimap){
 
 
 /*==========================================================
+    STATUS PENYEMBUHAN / HP RENDAH
+==========================================================*/
+
+#healBadge{
+
+    position:fixed;
+
+    top:84px;
+    left:10px;
+
+    z-index:20;
+
+    display:none;
+
+    padding:4px 12px;
+
+    border-radius:12px;
+
+    font-size:12px;
+
+    color:#fff;
+
+    text-shadow:var(--text-stroke);
+
+    background:rgba(10,22,52,.85);
+
+    border:2px solid var(--gold);
+
+    pointer-events:none;
+
+}
+
+#healBadge.healing{
+    border-color:#7dff9a;
+    color:#b6ffc8;
+}
+
+#healBadge.low{
+
+    border-color:#ff6a6a;
+    color:#ffc2c2;
+
+    animation:warnPulse 1s ease-in-out infinite;
+
+}
+
+@keyframes warnPulse{
+
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.06); }
+
+}
+
+
+/*==========================================================
     HUD TENGAH ATAS
 ==========================================================*/
 
@@ -1020,6 +1075,12 @@ body > canvas:not(#minimap){
     #hudTopRight{
         top:6px;
         right:6px;
+    }
+
+    #healBadge{
+        top:66px;
+        left:6px;
+        font-size:11px;
     }
 
     #minimap{
