@@ -21,10 +21,13 @@ Buka `index.html` di browser (atau jalankan server statis, misalnya `python3 -m 
 - Setiap 10 detik, 3 minion kurcaci muncul dari tiap sisi. Minion melawan minion dan hero lawan yang dekat, lalu maju ke tower dan base.
 - Serangan Hikaru mengenai semua musuh dalam jangkauan: hero, minion, tower, dan base.
 - Hero musuh (Dark Knight) hidup lagi 8 detik setelah dikalahkan.
+- Tiap tim punya **lingkaran penyembuh** hijau di samping base. Hero yang berdiri di dalamnya memulihkan 60 HP per detik. Lokasinya ditandai di minimap, dan saat HP di bawah 30% muncul peringatan di layar.
 
 ## Tampilan
 
 Gaya kartun ala game MOBA mobile: karakter chibi beroutline, langit dan rumput cerah, lane tanah, HUD biru-emas dengan potret hero, scoreboard, minimap, angka damage melayang, dan bar HP di atas tiap unit. Semua model dibuat dari bentuk dasar Three.js (tanpa aset gambar atau model luar).
+
+Efek dan animasi: ayunan pedang dengan busur tebasan, percikan dan kilatan putih saat terkena serangan, asap saat unit mati atau tower hancur, bola energi dari tower, getaran kamera, kilat merah di layar saat Hikaru terluka, jubah yang bergoyang, minion yang muncul dengan efek membesar. Dunia lebih hidup dengan obor berapi, kunang-kunang, bayangan awan yang bergeser, bendera berkibar di base, jendela bercahaya di tower, dan barisan pohon di luar pagar.
 
 ## Struktur file
 

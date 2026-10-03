@@ -120,7 +120,8 @@ function createMinion(team, x, z) {
     axe.rotation.z = -0.2;
     dwarf.add(axe);
 
-    dwarf.scale.setScalar(0.85);
+    // Mulai kecil, membesar saat muncul (lihat updateMinions)
+    dwarf.scale.setScalar(0.85 * 0.3);
 
     dwarf.userData.barHeight = 2.7;
 
@@ -140,10 +141,15 @@ function createMinion(team, x, z) {
         speed: MINION_CONFIG.speed,
         damage: MINION_CONFIG.damage,
         timer: 0,
-        alive: true
+        alive: true,
+        axe: axe,
+        swingTime: 0,
+        spawnTime: 0
     };
 
     Minions.push(minion);
+
+    spawnRingEffect({ x: x, z: z }, teamColor, 1.3, 0.35);
 
     return minion;
 }
@@ -262,6 +268,29 @@ function updateMinions(dt) {
 
         }
 
+        // Muncul dengan efek membesar
+        if (m.spawnTime < 0.35) {
+
+            m.spawnTime += dt;
+
+            const k = Math.min(1, m.spawnTime / 0.35);
+            const eased = 1 - Math.pow(1 - k, 3);
+
+            m.mesh.scale.setScalar(0.85 * (0.3 + 0.7 * eased));
+
+        }
+
+        // Ayunan kapak
+        if (m.swingTime > 0) {
+
+            m.swingTime -= dt;
+
+            const progress = 1 - Math.max(0, m.swingTime) / 0.3;
+
+            m.axe.rotation.z = -0.2 - Math.sin(progress * Math.PI) * 1.6;
+
+        }
+
         const target = getMinionTarget(m);
 
         if (!target) continue;
@@ -298,6 +327,8 @@ function updateMinions(dt) {
             if (m.timer <= 0) {
 
                 m.timer = MINION_CONFIG.attackCooldown;
+
+                m.swingTime = 0.3;
 
                 damageEntity(target, m.damage);
 
@@ -337,6 +368,10 @@ function damageEntity(target, damage) {
                 : (target.kind === "minion" ? "small" : "")
         );
 
+    }
+
+    if (hittable) {
+        hitEffects(target);
     }
 
     // Hero musuh
@@ -380,6 +415,18 @@ function damageEntity(target, damage) {
             target.hp = 0;
             target.alive = false;
             scene.remove(target.mesh);
+
+            // Asap kecil dan percikan saat minion mati
+            spawnPuff(
+                target.mesh.position,
+                target.team === "player" ? 0x7fc2ff : 0xff9a6a,
+                0.8
+            );
+
+            spawnSparks(
+                { x: target.mesh.position.x, y: 0.9, z: target.mesh.position.z },
+                0xffe27a, 6, 3, 4
+            );
         }
 
     }
@@ -390,5 +437,41 @@ function damageEntity(target, damage) {
 function damageTarget(target, damage) {
 
     damageEntity(target, damage);
+
+}
+
+/*==========================================================
+    EFEK KENA HIT
+    Percikan, kilatan putih, getar kamera (khusus player).
+==========================================================*/
+
+function hitEffects(target) {
+
+    const pos = target.mesh.position;
+
+    const isPlayer = target === Player;
+
+    spawnSparks(
+        { x: pos.x, y: 1.1, z: pos.z },
+        isPlayer ? 0xff5a5a : 0xffe27a,
+        isPlayer ? 7 : 4,
+        3,
+        3
+    );
+
+    // Hero musuh punya efek kilatan sendiri (enemy.js)
+    if (target !== Enemy) {
+        flashMesh(target.mesh, 90);
+    }
+
+    if (isPlayer) {
+
+        shakeCamera(0.12, 0.18);
+
+        if (typeof flashHurt === "function") {
+            flashHurt();
+        }
+
+    }
 
 }

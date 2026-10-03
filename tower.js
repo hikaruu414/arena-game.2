@@ -70,6 +70,28 @@ function createTower(team,x,z){
         0xb7b9cc, 0, 1.3, 0
     ));
 
+    // JENDELA BERCAHAYA
+    for (let i = 0; i < 4; i++) {
+
+        const angle = Math.PI / 4 + i * Math.PI / 2;
+
+        const windowMesh = new THREE.Mesh(
+            new THREE.BoxGeometry(0.28,0.45,0.1),
+            new THREE.MeshBasicMaterial({ color:0xffe08a })
+        );
+
+        windowMesh.position.set(
+            Math.sin(angle) * 1.22,
+            1.5,
+            Math.cos(angle) * 1.22
+        );
+
+        windowMesh.rotation.y = angle;
+
+        tower.add(windowMesh);
+
+    }
+
     // PITA WARNA TIM
     tower.add(makePart(
         new THREE.CylinderGeometry(1.16,1.16,0.3,14),
@@ -477,6 +499,25 @@ function updateTowers(dt){
 
             );
 
+            // Bola energi dari kristal tower ke target
+            spawnProjectile(
+
+                {
+                    x:tower.mesh.position.x,
+                    y:4.5,
+                    z:tower.mesh.position.z
+                },
+
+                {
+                    x:target.mesh.position.x,
+                    y:1.2,
+                    z:target.mesh.position.z
+                },
+
+                tower.team==="player" ? 0x7fc2ff : 0xff7a7a
+
+            );
+
 
 
         }
@@ -533,6 +574,22 @@ function hurtTower(tower,damage){
         tower.alive=false;
 
         scene.remove(tower.mesh);
+
+        // Ledakan: asap, percikan, cincin, dan getaran kamera
+        const boomColor = tower.team==="player" ? 0x3d8bff : 0xff4d4d;
+
+        spawnPuff(tower.mesh.position, 0x9a9aa8, 2.2);
+
+        spawnPuff(tower.mesh.position, boomColor, 1.6);
+
+        spawnSparks(
+            { x:tower.mesh.position.x, y:2, z:tower.mesh.position.z },
+            boomColor, 28, 5, 6
+        );
+
+        spawnRingEffect(tower.mesh.position, boomColor, 5, 0.6);
+
+        shakeCamera(0.5, 0.6);
 
         if(typeof updateBaseShield==="function")
 

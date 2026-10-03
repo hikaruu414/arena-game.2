@@ -228,6 +228,24 @@ function drawMinimap() {
     ctx.fillStyle = "#d9b878";
     ctx.fillRect(0, pz(-2.3), size, 4.6 * k);
 
+    // Area penyembuh
+    for (const pad of HealPads) {
+
+        const cx = px(pad.mesh.position.x);
+        const cz = pz(pad.mesh.position.z);
+
+        ctx.fillStyle = "#7dff9a";
+        ctx.beginPath();
+        ctx.arc(cx, cz, 6, 0, 6.2832);
+        ctx.fill();
+
+        // Tanda plus
+        ctx.fillStyle = "#145a2a";
+        ctx.fillRect(cx - 3.5, cz - 1, 7, 2);
+        ctx.fillRect(cx - 1, cz - 3.5, 2, 7);
+
+    }
+
     // Bangunan
     for (const b of Bases) {
 
@@ -351,6 +369,36 @@ function updateUI() {
         String(Towers.filter(t => t.team === "enemy" && t.alive).length)
     );
 
+    // ---------- Status penyembuhan / peringatan HP rendah ----------
+    let healMessage = "";
+    let healClass = "";
+
+    if (Player.healing) {
+
+        healMessage = "💚 Memulihkan HP...";
+        healClass = "healing";
+
+    } else if (Player.hp > 0 && Player.hp / Player.maxHp < 0.3) {
+
+        healMessage = "❤️ HP rendah! Menuju lingkaran hijau di base";
+        healClass = "low";
+
+    }
+
+    if (uiCache.healMessage !== healMessage) {
+
+        uiCache.healMessage = healMessage;
+
+        const badge = document.getElementById("healBadge");
+
+        if (badge) {
+            badge.textContent = healMessage;
+            badge.className = healClass;
+            badge.style.display = healMessage ? "block" : "none";
+        }
+
+    }
+
     // ---------- Skill ----------
     if (typeof Skills !== "undefined") {
 
@@ -405,6 +453,25 @@ function showDamageNumber(pos, text, kind) {
         floatingCount--;
 
     }, 800);
+
+}
+
+/*==========================================================
+    KILAT MERAH SAAT PLAYER TERLUKA
+==========================================================*/
+
+function flashHurt() {
+
+    const el = document.getElementById("hurtFlash");
+
+    if (!el) return;
+
+    // Ulang animasi CSS dari awal
+    el.classList.remove("show");
+
+    void el.offsetWidth;
+
+    el.classList.add("show");
 
 }
 

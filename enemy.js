@@ -62,10 +62,12 @@ function createEnemy() {
 
     /*================ CAPE ================*/
 
-    enemy.add(makePart(
+    const cape = makePart(
         new THREE.BoxGeometry(1.0, 1.1, 0.07),
         0x23182e, 0, 1.08, 0.46
-    ));
+    );
+
+    enemy.add(cape);
 
     /*================ HEAD ================*/
 
@@ -191,6 +193,31 @@ function createEnemy() {
     blob.position.y = 0.05;
     enemy.add(blob);
 
+    // Cincin hero di tanah (4 busur, berputar pelan)
+    const aura = new THREE.Group();
+
+    aura.position.y = 0.07;
+
+    for (let i = 0; i < 4; i++) {
+
+        const arcMesh = new THREE.Mesh(
+            new THREE.RingGeometry(0.85, 1.05, 14, 1, i * Math.PI / 2, Math.PI / 3),
+            new THREE.MeshBasicMaterial({
+                color: 0xff4d4d,
+                transparent: true,
+                opacity: 0.85,
+                side: THREE.DoubleSide
+            })
+        );
+
+        arcMesh.rotation.x = -Math.PI / 2;
+
+        aura.add(arcMesh);
+
+    }
+
+    enemy.add(aura);
+
     enemy.scale.setScalar(1.15);
 
     enemy.userData.barHeight = 3.2;
@@ -202,6 +229,10 @@ function createEnemy() {
     );
 
     Enemy.mesh = enemy;
+    Enemy.cape = cape;
+    Enemy.sword = sword;
+    Enemy.aura = aura;
+    Enemy.swingTime = 0;
 
     scene.add(enemy);
 
@@ -229,6 +260,46 @@ function updateEnemy(dt) {
     const dz = Player.mesh.position.z - Enemy.mesh.position.z;
 
     const distance = Math.hypot(dx, dz);
+
+    /*================ ANIMASI ================*/
+
+    const clock = performance.now() * 0.001;
+    const walking = distance > Enemy.attackRange;
+
+    Enemy.mesh.position.y = walking
+        ? Math.abs(Math.sin(clock * 10)) * 0.12
+        : (Math.sin(clock * 2) + 1) * 0.02;
+
+    if (Enemy.cape) {
+        Enemy.cape.rotation.x = walking
+            ? 0.15 + Math.sin(clock * 10) * 0.12
+            : 0.04 + Math.sin(clock * 2) * 0.02;
+    }
+
+    if (Enemy.aura) {
+        Enemy.aura.rotation.y += dt * 1.2;
+    }
+
+    if (Enemy.sword) {
+
+        if (Enemy.swingTime > 0) {
+
+            Enemy.swingTime -= dt;
+
+            const progress = 1 - Math.max(0, Enemy.swingTime) / 0.3;
+            const swing = Math.sin(progress * Math.PI);
+
+            Enemy.sword.rotation.z = -0.5 - swing * 1.8;
+            Enemy.sword.rotation.x = -swing * 0.7;
+
+        } else {
+
+            Enemy.sword.rotation.z = -0.5;
+            Enemy.sword.rotation.x = 0;
+
+        }
+
+    }
 
     /*================ CHASE PLAYER ================*/
 
@@ -283,26 +354,11 @@ function updateEnemy(dt) {
             Enemy.timer =
                 Enemy.attackCooldown;
 
-            /* Sword Animation */
+            /* Sword Animation (dijalankan di updateEnemy) */
 
-            const sword =
-                Enemy.mesh.getObjectByName("Sword");
+            Enemy.swingTime = 0.3;
 
-            if (sword) {
-
-                sword.rotation.z = -1.5;
-
-                setTimeout(() => {
-
-                    if (Enemy.mesh) {
-
-                        sword.rotation.z = -0.5;
-
-                    }
-
-                }, 120);
-
-            }
+            spawnSlashEffect(Enemy.mesh.position, Enemy.mesh.rotation.y, 0xff6a6a);
 
             /* Damage Player */
 
@@ -376,6 +432,16 @@ function damageEnemy(amount) {
     if (Enemy.hp <= 0) {
 
         Enemy.alive = false;
+
+        // Asap, percikan, dan getaran kamera
+        spawnPuff(Enemy.mesh.position, 0x6a5a7a, 1.4);
+
+        spawnSparks(
+            { x: Enemy.mesh.position.x, y: 1.2, z: Enemy.mesh.position.z },
+            0xffe27a, 14, 4, 4
+        );
+
+        shakeCamera(0.25, 0.35);
 
         // Animasi jatuh
         Enemy.mesh.rotation.z = Math.PI / 2;
